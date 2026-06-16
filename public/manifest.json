@@ -1,0 +1,32 @@
+{
+  "name": "SIMAK — Monitoring Akhlak & Karakter",
+  "short_name": "SIMAK",
+  "description": "Sistem Monitoring Akhlak dan Karakter SDIT Al-Kautsar Mukomuko",
+  "start_url": "/login",
+  "display": "standalone",
+  "background_color": "#2D7A4F",
+  "theme_color": "#2D7A4F",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["education", "lifestyle"],
+  "lang": "id"
+}

@@ -1,0 +1,72 @@
+// ============================================================
+// app/api/admin/mutabaah-items/route.ts
+// GET:  Item mutabaah per tahun ajaran
+// POST: Tambah item baru
+// ============================================================
+
+import { NextRequest, NextResponse } from 'next/server'
+import { requireRole }               from '@/lib/auth/staff'
+import { createServerClient }        from '@/lib/supabase/server'
+
+export async function GET(request: NextRequest) {
+  try {
+    await requireRole(['admin'])
+    const supabase = await createServerClient()
+    const { searchParams } = new URL(request.url)
+    const tahunId = searchParams.get('tahunId')
+
+    let query = supabase
+      .from('mutabaah_item')
+      .select('id, nama_item, urutan, is_active, tahun_ajaran_id, tahun_ajaran:tahun_ajaran_id(nama)')
+      .order('urutan', { ascending: true })
+
+    if (tahunId) query = query.eq('tahun_ajaran_id', tahunId)
+
+    const { data, error } = await query
+    if (error) throw error
+    return NextResponse.json(data ?? [])
+  } catch (err: unknown) {
+    if (err instanceof Error && err.message === 'UNAUTHORIZED') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (err instanceof Error && err.message === 'FORBIDDEN')    return NextResponse.json({ error: 'Forbidden' },    { status: 403 })
+    return NextResponse.json({ error: 'Terjadi kesalahan' }, { status: 500 })
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    await requireRole(['admin'])
+    const supabase = await createServerClient()
+    const body     = await request.json()
+    const { namaItem, tahunAjaranId } = body
+
+    if (!namaItem?.trim() || !tahunAjaranId) {
+      return NextResponse.json({ error: 'Nama item dan tahun ajaran wajib diisi' }, { status: 400 })
+    }
+
+    // Ambil urutan tertinggi
+    const { data: lastItem } = await supabase
+      .from('mutabaah_item')
+      .select('urutan')
+      .eq('tahun_ajaran_id', tahunAjaranId)
+      .order('urutan', { ascending: false })
+      .limit(1)
+      .single()
+
+    const nextUrutan = (lastItem?.urutan ?? 0) + 1
+
+    const { data, error } = await supabase
+      .from('mutabaah_item')
+      .insert({ nama_item: namaItem.trim(), tahun_ajaran_id: tahunAjaranId, urutan: nextUrutan })
+      .select().single()
+
+    if (error) {
+      if (error.code === '23505') return NextResponse.json({ error: 'Item sudah ada di tahun ajaran ini' }, { status: 409 })
+      throw error
+    }
+    return NextResponse.json({ success: true, data })
+  } catch (err: unknown) {
+    if (err instanceof Error && err.message === 'UNAUTHORIZED') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (err instanceof Error && err.message === 'FORBIDDEN')    return NextResponse.json({ error: 'Forbidden' },    { status: 403 })
+    return NextResponse.json({ error: 'Terjadi kesalahan' }, { status: 500 })
+  }
+}
