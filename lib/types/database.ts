@@ -37,6 +37,7 @@ export interface Database {
           is_active?: boolean
           updated_at?: string
         }
+        Relationships: []
       }
 
       kelas: {
@@ -62,6 +63,7 @@ export interface Database {
           wali_kelas_id?:   string | null
           updated_at?:      string
         }
+        Relationships: []
       }
 
       siswa: {
@@ -96,6 +98,7 @@ export interface Database {
           is_active?:    boolean
           updated_at?:   string
         }
+        Relationships: []
       }
 
       siswa_kelas: {
@@ -121,6 +124,7 @@ export interface Database {
           tahun_ajaran_id?: string
           updated_at?:      string
         }
+        Relationships: []
       }
 
       mutabaah_item: {
@@ -148,6 +152,7 @@ export interface Database {
           is_active?:  boolean
           updated_at?: string
         }
+        Relationships: []
       }
 
       mutabaah_log: {
@@ -175,6 +180,7 @@ export interface Database {
           is_checked?:  boolean
           updated_at?:  string
         }
+        Relationships: []
       }
 
       tahfiz_log: {
@@ -212,6 +218,7 @@ export interface Database {
           catatan?:    string | null
           updated_at?: string
         }
+        Relationships: []
       }
 
       wafa_log: {
@@ -246,6 +253,7 @@ export interface Database {
           catatan?:    string | null
           updated_at?: string
         }
+        Relationships: []
       }
 
       user_profile: {
@@ -271,6 +279,7 @@ export interface Database {
           is_active?: boolean
           updated_at?: string
         }
+        Relationships: []
       }
 
       parent_sessions: {
@@ -293,8 +302,15 @@ export interface Database {
         Update: {
           last_used_at?: string | null
         }
+        Relationships: []
       }
     }
+
+    Views: {}
+
+    Enums: {}
+
+    CompositeTypes: {}
 
     Functions: {
       create_parent_session: {

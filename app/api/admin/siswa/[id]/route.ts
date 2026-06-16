@@ -46,7 +46,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     if (parentPhone  !== undefined) updates.parent_phone  = parentPhone || null
 
     if (Object.keys(updates).length > 0) {
-      const { error } = await supabase.from('siswa').update(updates).eq('id', id)
+      const { error } = await supabase.from('siswa').update(updates as never).eq('id', id)
       if (error) throw error
     }
 

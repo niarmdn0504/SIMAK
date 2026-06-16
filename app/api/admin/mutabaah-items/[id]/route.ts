@@ -23,7 +23,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     if (isActive  !== undefined) updates.is_active = isActive
     if (urutan    !== undefined) updates.urutan    = urutan
 
-    const { error } = await supabase.from('mutabaah_item').update(updates).eq('id', id)
+    const { error } = await supabase.from('mutabaah_item').update(updates as never).eq('id', id)
     if (error) throw error
     return NextResponse.json({ success: true })
   } catch (err: unknown) {

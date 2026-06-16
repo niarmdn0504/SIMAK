@@ -12,15 +12,16 @@
 // ============================================================
 
 import { createServerClient as createSSRServerClient } from '@supabase/ssr'
-import { createClient }                                 from '@supabase/supabase-js'
-import { cookies }                                      from 'next/headers'
-import type { Database }                                from '@/lib/types/database'
+import { createClient, type SupabaseClient }           from '@supabase/supabase-js'
+import { cookies }                                     from 'next/headers'
+import type { Database }                               from '@/lib/types/database'
+import type { SetAllCookies }                          from '@supabase/ssr'
 
 // -----------------------------------------------------------
 // Server Client — untuk Server Components & Route Handlers
 // Menggunakan anon key + cookies (menghormati RLS)
 // -----------------------------------------------------------
-export async function createServerClient() {
+export async function createServerClient(): Promise<SupabaseClient<Database, 'public', 'public'>> {
   const cookieStore = await cookies()
 
   return createSSRServerClient<Database>(
@@ -31,7 +32,7 @@ export async function createServerClient() {
         getAll() {
           return cookieStore.getAll()
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: Parameters<SetAllCookies>[0]) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
@@ -42,7 +43,7 @@ export async function createServerClient() {
         },
       },
     }
-  )
+  ) as unknown as SupabaseClient<Database, 'public', 'public'>
 }
 
 // -----------------------------------------------------------

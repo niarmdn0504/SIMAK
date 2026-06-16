@@ -29,7 +29,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     if (isActive !== undefined) updates.is_active = isActive
 
     if (Object.keys(updates).length > 0) {
-      const { error } = await svc.from('user_profile').update(updates).eq('id', id)
+      const { error } = await svc.from('user_profile').update(updates as never).eq('id', id)
       if (error) throw error
     }
 

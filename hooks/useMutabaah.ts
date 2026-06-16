@@ -25,7 +25,7 @@ export function useTodayMutabaah(tanggal?: string) {
       return res.json()
     },
     staleTime:          0,
-    refetchOnFocus:     true,
+    refetchOnWindowFocus: true,
     refetchOnReconnect: true,
   })
 }

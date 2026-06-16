@@ -20,7 +20,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     if (namaKelas   !== undefined) updates.nama_kelas    = namaKelas.trim()
     if (waliKelasId !== undefined) updates.wali_kelas_id = waliKelasId || null
 
-    const { error } = await supabase.from('kelas').update(updates).eq('id', id)
+    const { error } = await supabase.from('kelas').update(updates as never).eq('id', id)
     if (error) {
       if (error.code === '23505') return NextResponse.json({ error: 'Nama kelas sudah ada' }, { status: 409 })
       throw error
