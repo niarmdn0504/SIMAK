@@ -23,9 +23,12 @@ const plusJakarta = Plus_Jakarta_Sans({
 })
 
 export const metadata: Metadata = {
-  title:       'SIMAK — Monitoring Akhlak & Karakter',
-  description: 'Sistem Monitoring Akhlak dan Karakter SDIT Al-Kautsar Mukomuko',
+  title:       'SIMAK — Monitoring Akhlak & Karakter SDIT Al-Kautsar Mukomuko',
+  description: 'Aplikasi Monitoring Akhlak dan Karakter SDIT Al-Kautsar Mukomuko',
   manifest:    '/manifest.json',
+  icons: {
+    icon: '/favicon.svg',
+  },
   appleWebApp: {
     capable:       true,
     statusBarStyle: 'default',
@@ -48,9 +51,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id" className={`${amiri.variable} ${plusJakarta.variable}`}>
-      <head>
-        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-      </head>
       <body className="font-body bg-neutral-50 text-neutral-900 antialiased">
         <Providers>{children}</Providers>
       </body>

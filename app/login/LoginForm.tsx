@@ -118,8 +118,8 @@ export function LoginForm() {
           <p className="text-primary-100 text-sm mt-1 font-body">
             Monitoring Akhlak & Karakter
           </p>
-          <p className="text-primary-200 text-xs mt-0.5 font-body">
-            SDIT Al-Kautsar Mukomuko
+          <p className="text-primary-200 text-xs mt-1 font-body leading-relaxed max-w-xs mx-auto">
+            Aplikasi Monitoring Akhlak dan Karakter<br />SDIT Al-Kautsar Mukomuko
           </p>
         </div>
 

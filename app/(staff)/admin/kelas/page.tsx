@@ -182,7 +182,7 @@ export default function AdminKelasPage() {
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-neutral-700 mb-1.5">Nama Kelas <span className="text-danger">*</span></label>
-                <input type="text" value={formNama} onChange={e => setFormNama(e.target.value)} placeholder="Contoh: 3A" className="w-full h-11 px-4 border border-neutral-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-300" required />
+                <input type="text" value={formNama} onChange={e => setFormNama(e.target.value)} placeholder="Contoh: 4.1, 4.2, 1.3" className="w-full h-11 px-4 border border-neutral-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-300" required />
               </div>
               {!editKelas && (
                 <div>

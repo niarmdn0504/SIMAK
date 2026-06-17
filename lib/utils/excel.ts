@@ -11,8 +11,8 @@ import * as XLSX from 'xlsx'
 export function generateImportTemplate(): Blob {
   const headers = ['nisn', 'nama_lengkap', 'nama_orang_tua', 'no_hp', 'kelas']
   const contoh = [
-    ['0123456701', 'Muhammad Azzam Al-Fatih', 'Bapak Ridwan',  '081234567001', '3A'],
-    ['0123456702', 'Aisyah Zahra Ramadhani',  'Ibu Kartini',   '081234567002', '3B'],
+    ['0123456701', 'Muhammad Azzam Al-Fatih', 'Bapak Ridwan',  '081234567001', '4.1'],
+    ['0123456702', 'Aisyah Zahra Ramadhani',  'Ibu Kartini',   '081234567002', '4.2'],
   ]
 
   const ws = XLSX.utils.aoa_to_sheet([headers, ...contoh])
@@ -38,7 +38,7 @@ export function generateImportTemplate(): Blob {
     ['nama_lengkap',  'Nama lengkap siswa',                         'Ya'],
     ['nama_orang_tua','Nama orang tua/wali',                        'Tidak'],
     ['no_hp',         'Nomor HP/WA orang tua',                      'Tidak'],
-    ['kelas',         'Nama kelas (harus sesuai dengan kelas di sistem, contoh: 3A)', 'Tidak'],
+    ['kelas',         'Nama kelas (harus sesuai dengan kelas di sistem, contoh: 4.1, 4.2, 1.3)', 'Tidak'],
     [''],
     ['Catatan:'],
     ['- NISN harus tepat 10 digit angka'],
