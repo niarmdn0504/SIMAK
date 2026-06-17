@@ -5,10 +5,10 @@
 
 'use client'
 
-import { useRouter }   from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
-import { cn }           from '@/lib/utils/cn'
-import type { StaffRole } from '@/lib/types/app'
+import { useRouter, usePathname } from 'next/navigation'
+import { createClient }           from '@/lib/supabase/client'
+import { cn }                     from '@/lib/utils/cn'
+import type { StaffRole }         from '@/lib/types/app'
 
 const ROLE_LABEL: Record<StaffRole, string> = {
   admin:       'Admin',
@@ -39,7 +39,12 @@ export function StaffShell({
   backLabel?: string
   title?:     string
 }) {
-  const router = useRouter()
+  const router   = useRouter()
+  const pathname = usePathname()
+  const autoBackHref = pathname.split('/').filter(Boolean).length > 1
+    ? pathname.substring(0, pathname.lastIndexOf('/')) || '/'
+    : undefined
+  const effectiveBackHref = backHref ?? autoBackHref
 
   async function handleLogout() {
     const supabase = createClient()
@@ -54,9 +59,9 @@ export function StaffShell({
       <header className="bg-primary-500 text-white sticky top-0 z-40 shadow-md">
         <div className="flex items-center h-14 px-4 gap-3">
           {/* Back button */}
-          {backHref && (
+          {effectiveBackHref && (
             <button
-              onClick={() => router.push(backHref)}
+              onClick={() => router.push(effectiveBackHref)}
               className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-primary-600 transition-colors"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
@@ -97,7 +102,7 @@ export function StaffShell({
         </div>
 
         {/* Role badge strip */}
-        {!backHref && (
+        {!effectiveBackHref && (
           <div className="px-4 pb-2">
             <span className={cn('text-xs font-semibold px-2.5 py-0.5 rounded-full', ROLE_COLOR[role])}>
               {ROLE_LABEL[role]}
