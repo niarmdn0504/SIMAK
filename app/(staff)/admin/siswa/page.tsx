@@ -14,11 +14,13 @@ interface SiswaRow {
   parent_name:  string | null
   parent_phone: string | null
   kelas:        string | null
+  kelas_id:     string | null
   is_active:    boolean
 }
 
 interface KelasGroup {
   nama:    string
+  kelasId: string | null
   siswa:   SiswaRow[]
   waliKelas: string | null
 }
@@ -33,6 +35,7 @@ export default function AdminSiswaPage() {
   const [showAdd,     setShowAdd]     = useState(false)
   const [confirmDeact, setConfirmDeact] = useState<string | null>(null)
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false)
+  const [confirmDeleteKelas, setConfirmDeleteKelas] = useState<{ nama: string; id: string | null } | null>(null)
   const [expandedKelas, setExpandedKelas] = useState<Set<string>>(new Set())
   const { showToast, ToastComponent } = useToast()
 
@@ -63,7 +66,8 @@ export default function AdminSiswaPage() {
 
     const groups: KelasGroup[] = []
     for (const [nama, siswa] of map) {
-      groups.push({ nama, siswa, waliKelas: null })
+      const kelasId = siswa.find(s => s.kelas_id)?.kelas_id ?? null
+      groups.push({ nama, kelasId, siswa, waliKelas: null })
     }
     groups.sort((a, b) => a.nama.localeCompare(b.nama, undefined, { numeric: true }))
     return groups
@@ -100,6 +104,22 @@ export default function AdminSiswaPage() {
       fetchSiswa()
     } else {
       showToast('Gagal menghapus data', 'error')
+    }
+  }
+
+  async function handleDeleteByKelas(kelasId: string | null, namaKelas: string) {
+    if (!kelasId) return
+    const res = await fetch('/api/admin/siswa/delete-by-kelas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kelasId }),
+    })
+    if (res.ok) {
+      showToast(`Semua siswa kelas ${namaKelas} dihapus`, 'success')
+      setConfirmDeleteKelas(null)
+      fetchSiswa()
+    } else {
+      showToast('Gagal menghapus', 'error')
     }
   }
 
@@ -188,24 +208,37 @@ export default function AdminSiswaPage() {
             return (
               <div key={group.nama} className="bg-white rounded-xl border border-neutral-200 overflow-hidden animate-in">
                 {/* Class header */}
-                <button
-                  onClick={() => toggleKelas(group.nama)}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 transition-colors"
-                >
-                  <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0', getClassColor(group.nama))}>
-                    {group.nama}
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="font-bold text-sm text-neutral-800">Kelas {group.nama}</p>
-                    <p className="text-xs text-neutral-400">{activeSiswa.length} siswa aktif</p>
-                  </div>
-                  <svg
-                    width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-                    className={cn('text-neutral-400 transition-transform', isExpanded && 'rotate-180')}
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <button
+                    onClick={() => toggleKelas(group.nama)}
+                    className="flex-1 flex items-center gap-3"
                   >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </button>
+                    <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0', getClassColor(group.nama))}>
+                      {group.nama}
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="font-bold text-sm text-neutral-800">Kelas {group.nama}</p>
+                      <p className="text-xs text-neutral-400">{activeSiswa.length} siswa aktif</p>
+                    </div>
+                    <svg
+                      width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+                      className={cn('text-neutral-400 transition-transform', isExpanded && 'rotate-180')}
+                    >
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button>
+                  {group.kelasId && (
+                    <button
+                      onClick={() => setConfirmDeleteKelas({ nama: group.nama, id: group.kelasId })}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg text-neutral-300 hover:text-danger hover:bg-red-50 transition-colors flex-shrink-0"
+                      title={`Hapus semua siswa kelas ${group.nama}`}
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                        <path d="M3 6h18M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/>
+                      </svg>
+                    </button>
+                  )}
+                </div>
 
                 {/* Siswa list */}
                 {isExpanded && (
@@ -276,6 +309,25 @@ export default function AdminSiswaPage() {
             <div className="flex gap-3">
               <button onClick={() => setConfirmDeact(null)} className="flex-1 h-11 border border-neutral-200 rounded-lg text-sm font-semibold text-neutral-600">Batal</button>
               <button onClick={() => handleDeactivate(confirmDeact)} className="flex-1 h-11 bg-danger text-white rounded-lg text-sm font-semibold">Nonaktifkan</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Delete by Kelas Modal */}
+      {confirmDeleteKelas && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-xl p-5">
+            <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-3">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-danger">
+                <path d="M3 6h18M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/>
+              </svg>
+            </div>
+            <h3 className="font-bold text-neutral-800 text-center mb-1">Hapus Kelas {confirmDeleteKelas.nama}?</h3>
+            <p className="text-sm text-neutral-500 text-center mb-4">Semua siswa di kelas ini akan dihapus permanen.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setConfirmDeleteKelas(null)} className="flex-1 h-11 border border-neutral-200 rounded-lg text-sm font-semibold text-neutral-600">Batal</button>
+              <button onClick={() => confirmDeleteKelas.id && handleDeleteByKelas(confirmDeleteKelas.id, confirmDeleteKelas.nama)} className="flex-1 h-11 bg-danger text-white rounded-lg text-sm font-semibold">Hapus</button>
             </div>
           </div>
         </div>

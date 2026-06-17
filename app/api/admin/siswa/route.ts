@@ -63,13 +63,14 @@ export async function GET(request: NextRequest) {
     if (tahunAktif) {
       const { data: skData } = await supabase
         .from('siswa_kelas')
-        .select('siswa_id, kelas:kelas_id(nama_kelas)')
+        .select('siswa_id, kelas:kelas_id(id, nama_kelas)')
         .eq('tahun_ajaran_id', tahunAktif.id)
 
-      const skMap = new Map(skData?.map(r => [r.siswa_id, (r.kelas as any)?.nama_kelas]) ?? [])
+      const skMap = new Map(skData?.map(r => [r.siswa_id, r]) ?? [])
       const result = (siswaList ?? []).map(s => ({
         ...s,
-        kelas: skMap.get(s.id) ?? null,
+        kelas:    (skMap.get(s.id)?.kelas as any)?.nama_kelas ?? null,
+        kelas_id: (skMap.get(s.id)?.kelas as any)?.id ?? null,
       }))
       return NextResponse.json(result)
     }

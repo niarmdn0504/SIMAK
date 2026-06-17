@@ -209,12 +209,15 @@ function SidebarContent({
               href={item.href}
               onClick={onClose}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all relative',
                 isActive
-                  ? 'bg-white/15 text-white shadow-sm'
+                  ? 'bg-white/20 text-white shadow-sm'
                   : 'text-primary-200 hover:bg-white/10 hover:text-white'
               )}
             >
+              {isActive && (
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-white rounded-r-full" />
+              )}
               <span className="w-5 h-5 flex items-center justify-center flex-shrink-0">{item.icon}</span>
               <span className="truncate">{item.label}</span>
             </Link>

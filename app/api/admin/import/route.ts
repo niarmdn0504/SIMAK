@@ -83,7 +83,22 @@ export async function POST(request: NextRequest) {
       .select('id, nama_kelas')
       .eq('tahun_ajaran_id', tahunId)
 
-    const kelasMap = new Map(kelasList?.map(k => [k.nama_kelas.toLowerCase(), k.id]) ?? [])
+    let kelasMap = new Map(kelasList?.map(k => [k.nama_kelas.toLowerCase(), k.id]) ?? [])
+
+    // Auto-create kelas yang belum ada di database
+    const kelasInExcel = new Set(valid.map(r => r.nama_kelas?.toLowerCase()).filter(Boolean))
+    for (const namaKelas of kelasInExcel) {
+      if (namaKelas && !kelasMap.has(namaKelas)) {
+        const { data: newKelas } = await supabase
+          .from('kelas')
+          .insert({ nama_kelas: namaKelas, tahun_ajaran_id: tahunId })
+          .select('id, nama_kelas')
+          .single()
+        if (newKelas) {
+          kelasMap.set(newKelas.nama_kelas.toLowerCase(), newKelas.id)
+        }
+      }
+    }
 
     // Cek NISN yang sudah ada
     const nisnList = valid.map(r => r.nisn)
