@@ -6,6 +6,7 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
+import Link                       from 'next/link'
 import { createClient }           from '@/lib/supabase/client'
 import { cn }                     from '@/lib/utils/cn'
 import type { StaffRole }         from '@/lib/types/app'
@@ -60,14 +61,14 @@ export function StaffShell({
         <div className="flex items-center h-14 px-4 gap-3">
           {/* Back button */}
           {effectiveBackHref && (
-            <button
-              onClick={() => router.push(effectiveBackHref)}
+            <Link
+              href={effectiveBackHref}
               className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-primary-600 transition-colors"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
                 <path d="M15 18l-6-6 6-6" />
               </svg>
-            </button>
+            </Link>
           )}
 
           {/* Title / Logo */}
