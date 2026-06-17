@@ -108,7 +108,7 @@ export default function AdminKenaikanKelasPage() {
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      <div className="bg-white border-b border-neutral-100 px-4 py-4 sticky top-14 z-30">
+      <div className="bg-white border-b border-neutral-100 px-4 py-4 sticky top-14 md:top-0 z-30">
         <h2 className="text-lg font-bold text-neutral-800">Kenaikan Kelas</h2>
         <p className="text-xs text-neutral-400 mt-0.5">Pindahkan siswa ke tahun ajaran baru</p>
       </div>

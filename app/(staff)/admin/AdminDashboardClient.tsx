@@ -28,10 +28,10 @@ const MENU_ITEMS = [
 
 export function AdminDashboardClient({ stats, adminNama }: { stats: Stats; adminNama: string }) {
   return (
-    <div className="px-4 py-4 max-w-lg mx-auto">
+      <div className="px-4 py-4 max-w-lg mx-auto">
       {/* Greeting */}
       <div className="mb-5 animate-in">
-        <h2 className="text-lg font-bold text-neutral-800">Halo, {adminNama} 👋</h2>
+        <h2 className="text-lg font-bold text-neutral-800">Dashboard Admin</h2>
         <p className="text-xs text-neutral-400 mt-0.5">Tahun Ajaran Aktif: <span className="font-semibold text-primary-600">{stats.tahunAktif}</span></p>
       </div>
 

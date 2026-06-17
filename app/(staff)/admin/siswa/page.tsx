@@ -63,7 +63,7 @@ export default function AdminSiswaPage() {
   return (
     <div className="min-h-screen bg-neutral-50">
       {/* Header */}
-      <div className="bg-white border-b border-neutral-100 px-4 py-4 sticky top-14 z-30">
+      <div className="bg-white border-b border-neutral-100 px-4 py-4 sticky top-14 md:top-0 z-30">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-bold text-neutral-800">Kelola Siswa</h2>
           <div className="flex gap-2">

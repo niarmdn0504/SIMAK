@@ -103,7 +103,7 @@ export default function AdminStaffPage() {
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      <div className="bg-white border-b border-neutral-100 px-4 py-4 sticky top-14 z-30">
+      <div className="bg-white border-b border-neutral-100 px-4 py-4 sticky top-14 md:top-0 z-30">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-neutral-800">Kelola Akun Guru</h2>
