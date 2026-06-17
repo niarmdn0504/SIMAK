@@ -109,8 +109,8 @@ export function LoginForm() {
       <div className="flex-1 flex flex-col items-center justify-center px-6 pt-16 pb-8">
         {/* Logo & branding */}
         <div className="text-center mb-10 animate-in">
-          <div className="w-20 h-20 bg-white/15 rounded-xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm border border-white/20">
-            <span className="font-display text-white text-3xl font-bold">س</span>
+          <div className="w-24 h-24 rounded-2xl overflow-hidden mx-auto mb-4 shadow-lg">
+            <img src="/logo.png" alt="Logo SIMAK" className="w-full h-full object-contain bg-white" />
           </div>
           <h1 className="font-display text-white text-4xl font-bold tracking-wide">
             SIMAK

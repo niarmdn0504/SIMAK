@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('mutabaah_item')
-      .select('id, nama_item, urutan, is_active, tahun_ajaran_id, tahun_ajaran:tahun_ajaran_id(nama)')
+      .select('id, nama_item, parent_id, urutan, is_active, tahun_ajaran_id, tahun_ajaran:tahun_ajaran_id(nama)')
       .order('urutan', { ascending: true })
 
     if (tahunId) query = query.eq('tahun_ajaran_id', tahunId)
@@ -37,26 +37,33 @@ export async function POST(request: NextRequest) {
     await requireRole(['admin'])
     const supabase = await createServerClient()
     const body     = await request.json()
-    const { namaItem, tahunAjaranId } = body
+    const { namaItem, tahunAjaranId, parentId } = body
 
     if (!namaItem?.trim() || !tahunAjaranId) {
       return NextResponse.json({ error: 'Nama item dan tahun ajaran wajib diisi' }, { status: 400 })
     }
 
     // Ambil urutan tertinggi
-    const { data: lastItem } = await supabase
+    let urutanQuery = supabase
       .from('mutabaah_item')
       .select('urutan')
       .eq('tahun_ajaran_id', tahunAjaranId)
       .order('urutan', { ascending: false })
       .limit(1)
-      .single()
+
+    if (parentId) {
+      urutanQuery = urutanQuery.eq('parent_id', parentId)
+    } else {
+      urutanQuery = urutanQuery.is('parent_id', null)
+    }
+
+    const { data: lastItem } = await urutanQuery.single()
 
     const nextUrutan = (lastItem?.urutan ?? 0) + 1
 
     const { data, error } = await supabase
       .from('mutabaah_item')
-      .insert({ nama_item: namaItem.trim(), tahun_ajaran_id: tahunAjaranId, urutan: nextUrutan })
+      .insert({ nama_item: namaItem.trim(), tahun_ajaran_id: tahunAjaranId, parent_id: parentId || null, urutan: nextUrutan })
       .select().single()
 
     if (error) {

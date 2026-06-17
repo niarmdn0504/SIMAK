@@ -13,47 +13,50 @@ interface Stats {
 export function AdminDashboardClient({ stats }: { stats: Stats; adminNama: string }) {
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
-      {/* Welcome */}
-      <div>
-        <h1 className="text-xl font-bold text-neutral-800">Dashboard</h1>
-        <p className="text-sm text-neutral-500 mt-0.5">
-          Tahun Ajaran <span className="font-semibold text-primary-600">{stats.tahunAktif}</span>
-        </p>
+      {/* Welcome banner */}
+      <div className="bg-gradient-to-br from-primary-600 via-primary-500 to-primary-700 rounded-2xl p-5 text-white relative overflow-hidden">
+        <div className="absolute -right-6 -top-6 w-32 h-32 bg-white/10 rounded-full" />
+        <div className="absolute -right-2 -bottom-8 w-24 h-24 bg-white/5 rounded-full" />
+        <div className="relative z-10">
+          <p className="text-primary-100 text-xs font-medium uppercase tracking-wide">Tahun Ajaran {stats.tahunAktif}</p>
+          <h1 className="text-2xl font-bold mt-1">Selamat Datang</h1>
+          <p className="text-primary-200 text-sm mt-0.5">Kelola data siswa dan mutabaah sekolah</p>
+        </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats cards */}
       <div className="grid grid-cols-3 gap-3">
-        <StatCard value={stats.totalSiswa} label="Siswa Aktif" icon={<IconSiswa />} color="text-primary-600" bg="bg-primary-50" border="border-primary-100" />
-        <StatCard value={stats.totalKelas} label="Kelas"       icon={<IconKelas />} color="text-blue-600"    bg="bg-blue-50"    border="border-blue-100" />
-        <StatCard value={stats.totalStaff} label="Staff"       icon={<IconStaff />} color="text-purple-600"  bg="bg-purple-50"  border="border-purple-100" />
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white relative overflow-hidden">
+          <div className="absolute -right-3 -bottom-3 w-16 h-16 bg-white/10 rounded-full" />
+          <p className="text-3xl font-bold relative z-10">{stats.totalSiswa}</p>
+          <p className="text-blue-100 text-xs mt-0.5 relative z-10">Siswa Aktif</p>
+        </div>
+        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white relative overflow-hidden">
+          <div className="absolute -right-3 -bottom-3 w-16 h-16 bg-white/10 rounded-full" />
+          <p className="text-3xl font-bold relative z-10">{stats.totalKelas}</p>
+          <p className="text-purple-100 text-xs mt-0.5 relative z-10">Kelas</p>
+        </div>
+        <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-4 text-white relative overflow-hidden">
+          <div className="absolute -right-3 -bottom-3 w-16 h-16 bg-white/10 rounded-full" />
+          <p className="text-3xl font-bold relative z-10">{stats.totalStaff}</p>
+          <p className="text-amber-100 text-xs mt-0.5 relative z-10">Staff</p>
+        </div>
       </div>
 
       {/* Quick actions */}
       <div>
         <h2 className="text-sm font-semibold text-neutral-600 mb-3">Akses Cepat</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <QuickAction href="/admin/siswa"        label="Kelola Siswa"  icon={<IconSiswa />}   color="bg-blue-50 text-blue-600 hover:bg-blue-100" />
-          <QuickAction href="/admin/kelas"        label="Kelola Kelas"  icon={<IconKelas />}   color="bg-green-50 text-green-600 hover:bg-green-100" />
-          <QuickAction href="/admin/staff"        label="Kelola Guru"   icon={<IconStaff />}   color="bg-purple-50 text-purple-600 hover:bg-purple-100" />
-          <QuickAction href="/admin/mutabaah-items" label="Item Mutabaah" icon={<IconCheck />} color="bg-amber-50 text-amber-600 hover:bg-amber-100" />
-          <QuickAction href="/admin/tahun-ajaran" label="Tahun Ajaran"  icon={<IconTahun />}   color="bg-indigo-50 text-indigo-600 hover:bg-indigo-100" />
-          <QuickAction href="/admin/siswa?import=1" label="Import Data" icon={<IconImport />}  color="bg-teal-50 text-teal-600 hover:bg-teal-100" />
-          <QuickAction href="/admin/export"       label="Export Data"   icon={<IconExport />}  color="bg-orange-50 text-orange-600 hover:bg-orange-100" />
-          <QuickAction href="/admin/kenaikan-kelas" label="Kenaikan Kelas" icon={<IconUp />}  color="bg-pink-50 text-pink-600 hover:bg-pink-100" />
+          <QuickAction href="/admin/siswa"          label="Kelola Siswa"    color="bg-gradient-to-br from-blue-50 to-blue-100 text-blue-700 border-blue-200" icon={<IconSiswa />} />
+          <QuickAction href="/admin/siswa?import=1" label="Import Data"     color="bg-gradient-to-br from-teal-50 to-teal-100 text-teal-700 border-teal-200" icon={<IconImport />} />
+          <QuickAction href="/admin/staff"          label="Kelola Guru"     color="bg-gradient-to-br from-purple-50 to-purple-100 text-purple-700 border-purple-200" icon={<IconStaff />} />
+          <QuickAction href="/admin/mutabaah-items" label="Item Mutabaah"   color="bg-gradient-to-br from-amber-50 to-amber-100 text-amber-700 border-amber-200" icon={<IconCheck />} />
+          <QuickAction href="/admin/tahun-ajaran"   label="Tahun Ajaran"    color="bg-gradient-to-br from-indigo-50 to-indigo-100 text-indigo-700 border-indigo-200" icon={<IconTahun />} />
+          <QuickAction href="/admin/export"         label="Export Data"     color="bg-gradient-to-br from-orange-50 to-orange-100 text-orange-700 border-orange-200" icon={<IconExport />} />
+          <QuickAction href="/admin/kenaikan-kelas" label="Kenaikan Kelas"  color="bg-gradient-to-br from-pink-50 to-pink-100 text-pink-700 border-pink-200" icon={<IconUp />} />
+          <QuickAction href="/tahfiz"               label="Tahfiz"          color="bg-gradient-to-br from-green-50 to-green-100 text-green-700 border-green-200" icon={<IconBook />} />
         </div>
       </div>
-    </div>
-  )
-}
-
-function StatCard({ value, label, icon, color, bg, border }: {
-  value: number; label: string; icon: React.ReactNode; color: string; bg: string; border: string
-}) {
-  return (
-    <div className={cn('rounded-xl border p-4', bg, border)}>
-      <div className={cn('mb-2', color)}>{icon}</div>
-      <p className={cn('text-2xl font-bold', color)}>{value}</p>
-      <p className="text-xs text-neutral-500 mt-0.5">{label}</p>
     </div>
   )
 }
@@ -65,7 +68,7 @@ function QuickAction({ href, label, icon, color }: {
     <Link
       href={href}
       className={cn(
-        'flex items-center gap-3 p-3 rounded-xl transition-all active:scale-[0.97]',
+        'flex items-center gap-3 p-3.5 rounded-xl border transition-all active:scale-[0.97] hover:shadow-md',
         color
       )}
     >
@@ -78,7 +81,7 @@ function QuickAction({ href, label, icon, color }: {
 // ─── Icons ──────────────────────────────────────────
 function IconSiswa() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -86,17 +89,9 @@ function IconSiswa() {
     </svg>
   )
 }
-function IconKelas() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-    </svg>
-  )
-}
 function IconStaff() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <line x1="19" y1="8" x2="19" y2="14" />
@@ -106,7 +101,7 @@ function IconStaff() {
 }
 function IconCheck() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M9 11l3 3L22 4" />
       <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
     </svg>
@@ -114,7 +109,7 @@ function IconCheck() {
 }
 function IconTahun() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="4" width="18" height="18" rx="2" />
       <line x1="16" y1="2" x2="16" y2="6" />
       <line x1="8" y1="2" x2="8" y2="6" />
@@ -124,7 +119,7 @@ function IconTahun() {
 }
 function IconImport() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="7 10 12 15 17 10" />
       <line x1="12" y1="15" x2="12" y2="3" />
@@ -133,7 +128,7 @@ function IconImport() {
 }
 function IconExport() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="17 8 12 3 7 8" />
       <line x1="12" y1="3" x2="12" y2="15" />
@@ -142,9 +137,17 @@ function IconExport() {
 }
 function IconUp() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
       <polyline points="16 7 22 7 22 13" />
+    </svg>
+  )
+}
+function IconBook() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
     </svg>
   )
 }

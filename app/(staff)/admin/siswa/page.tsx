@@ -1,11 +1,6 @@
-// ============================================================
-// app/(staff)/admin/siswa/page.tsx
-// Kelola Siswa — list, tambah, edit, deactivate, import
-// ============================================================
-
 'use client'
 
-import { useState, useEffect }  from 'react'
+import { useState, useEffect, useMemo }  from 'react'
 import { useSearchParams }      from 'next/navigation'
 import { useToast }             from '@/components/ui/Toast'
 import { ImportExcelModal }     from '@/components/admin/ImportExcelModal'
@@ -22,6 +17,12 @@ interface SiswaRow {
   is_active:    boolean
 }
 
+interface KelasGroup {
+  nama:    string
+  siswa:   SiswaRow[]
+  waliKelas: string | null
+}
+
 export default function AdminSiswaPage() {
   const searchParams = useSearchParams()
   const [siswaList,   setSiswaList]   = useState<SiswaRow[]>([])
@@ -31,18 +32,54 @@ export default function AdminSiswaPage() {
   const [editSiswa,   setEditSiswa]   = useState<SiswaRow | null>(null)
   const [showAdd,     setShowAdd]     = useState(false)
   const [confirmDeact, setConfirmDeact] = useState<string | null>(null)
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false)
+  const [expandedKelas, setExpandedKelas] = useState<Set<string>>(new Set())
   const { showToast, ToastComponent } = useToast()
 
   async function fetchSiswa() {
     setIsLoading(true)
-    const q = search ? `?search=${encodeURIComponent(search)}` : ''
-    const res = await fetch(`/api/admin/siswa${q}`)
+    const res = await fetch('/api/admin/siswa')
     const data = await res.json()
     setSiswaList(Array.isArray(data) ? data : [])
     setIsLoading(false)
   }
 
-  useEffect(() => { fetchSiswa() }, [search])
+  useEffect(() => { fetchSiswa() }, [])
+
+  const kelasGroups = useMemo(() => {
+    const filtered = search
+      ? siswaList.filter(s =>
+          s.nama_lengkap.toLowerCase().includes(search.toLowerCase()) ||
+          s.nisn.includes(search)
+        )
+      : siswaList
+
+    const map = new Map<string, SiswaRow[]>()
+    for (const s of filtered) {
+      const k = s.kelas || 'Tanpa Kelas'
+      if (!map.has(k)) map.set(k, [])
+      map.get(k)!.push(s)
+    }
+
+    const groups: KelasGroup[] = []
+    for (const [nama, siswa] of map) {
+      groups.push({ nama, siswa, waliKelas: null })
+    }
+    groups.sort((a, b) => a.nama.localeCompare(b.nama, undefined, { numeric: true }))
+    return groups
+  }, [siswaList, search])
+
+  const totalActive = siswaList.filter(s => s.is_active).length
+  const totalKelas  = new Set(siswaList.map(s => s.kelas).filter(Boolean)).size
+
+  function toggleKelas(nama: string) {
+    setExpandedKelas(prev => {
+      const next = new Set(prev)
+      if (next.has(nama)) next.delete(nama)
+      else next.add(nama)
+      return next
+    })
+  }
 
   async function handleDeactivate(id: string) {
     const res = await fetch(`/api/admin/siswa/${id}`, { method: 'DELETE' })
@@ -55,10 +92,27 @@ export default function AdminSiswaPage() {
     }
   }
 
-  const filtered = siswaList.filter(s =>
-    s.nama_lengkap.toLowerCase().includes(search.toLowerCase()) ||
-    s.nisn.includes(search)
-  )
+  async function handleDeleteAll() {
+    const activeIds = siswaList.filter(s => s.is_active).map(s => s.id)
+    let deleted = 0
+    for (const id of activeIds) {
+      const res = await fetch(`/api/admin/siswa/${id}`, { method: 'DELETE' })
+      if (res.ok) deleted++
+    }
+    showToast(`${deleted} siswa dinonaktifkan`, 'success')
+    setConfirmDeleteAll(false)
+    fetchSiswa()
+  }
+
+  const CLASS_COLORS: Record<string, string> = {
+    '1': 'bg-blue-500', '2': 'bg-green-500', '3': 'bg-purple-500',
+    '4': 'bg-amber-500', '5': 'bg-pink-500', '6': 'bg-indigo-500',
+  }
+
+  function getClassColor(nama: string) {
+    const grade = nama.charAt(0)
+    return CLASS_COLORS[grade] || 'bg-neutral-500'
+  }
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -90,75 +144,143 @@ export default function AdminSiswaPage() {
         />
       </div>
 
-      {/* Stats */}
-      <div className="px-4 py-2 flex items-center gap-3">
-        <p className="text-xs text-neutral-400">{siswaList.filter(s => s.is_active).length} aktif · {siswaList.filter(s => !s.is_active).length} nonaktif</p>
-      </div>
-
-      {/* List */}
-      <div className="px-4 pb-6 space-y-2">
-        {isLoading ? (
-          Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-16 bg-neutral-200 rounded-lg animate-skeleton" />
-          ))
-        ) : filtered.length === 0 ? (
-          <div className="card text-center py-10">
-            <p className="text-3xl mb-2">👤</p>
-            <p className="text-sm text-neutral-500">Tidak ada siswa ditemukan</p>
-          </div>
-        ) : (
-          filtered.map((siswa, i) => (
-            <div key={siswa.id} className={cn('card animate-in', !siswa.is_active && 'opacity-60')} style={{ animationDelay: `${i * 0.02}s` }}>
-              {confirmDeact === siswa.id ? (
-                <div className="space-y-2">
-                  <p className="text-sm font-semibold text-neutral-700">Nonaktifkan {siswa.nama_lengkap}?</p>
-                  <p className="text-xs text-neutral-500">Data historis tetap tersimpan.</p>
-                  <div className="flex gap-2">
-                    <button onClick={() => setConfirmDeact(null)} className="flex-1 py-1.5 text-xs border border-neutral-200 rounded-md font-semibold">Batal</button>
-                    <button onClick={() => handleDeactivate(siswa.id)} className="flex-1 py-1.5 text-xs bg-danger text-white rounded-md font-semibold">Nonaktifkan</button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
-                    <span className="text-primary-700 font-bold text-sm">{siswa.nama_lengkap.charAt(0)}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-sm text-neutral-800 truncate">{siswa.nama_lengkap}</p>
-                      {!siswa.is_active && (
-                        <span className="text-[10px] bg-neutral-200 text-neutral-500 px-1.5 py-0.5 rounded-full font-semibold">Nonaktif</span>
-                      )}
-                    </div>
-                    <p className="text-xs text-neutral-400">{siswa.nisn} · {siswa.kelas ? `Kelas ${siswa.kelas}` : 'Belum ada kelas'}</p>
-                  </div>
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => setEditSiswa(siswa)}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg text-neutral-400 hover:text-primary-500 hover:bg-primary-50 transition-colors"
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                      </svg>
-                    </button>
-                    {siswa.is_active && (
-                      <button
-                        onClick={() => setConfirmDeact(siswa.id)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg text-neutral-400 hover:text-danger hover:bg-red-50 transition-colors"
-                      >
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))
+      {/* Stats bar */}
+      <div className="px-4 py-3 flex items-center justify-between bg-white border-b border-neutral-100">
+        <div className="flex gap-4">
+          <p className="text-xs text-neutral-500"><span className="font-bold text-primary-600">{totalActive}</span> siswa aktif</p>
+          <p className="text-xs text-neutral-500"><span className="font-bold text-blue-600">{totalKelas}</span> kelas</p>
+        </div>
+        {siswaList.some(s => s.is_active) && (
+          <button
+            onClick={() => setConfirmDeleteAll(true)}
+            className="text-xs text-danger font-semibold hover:underline"
+          >
+            Nonaktifkan Semua
+          </button>
         )}
       </div>
+
+      {/* Class groups */}
+      <div className="px-4 py-4 space-y-3">
+        {isLoading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-24 bg-neutral-200 rounded-xl animate-skeleton" />
+          ))
+        ) : kelasGroups.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="w-20 h-20 bg-neutral-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <span className="text-4xl">👤</span>
+            </div>
+            <p className="text-sm font-semibold text-neutral-600">Belum ada siswa</p>
+            <p className="text-xs text-neutral-400 mt-1">Tambah siswa atau import dari Excel</p>
+            <button
+              onClick={() => setShowImport(true)}
+              className="mt-4 h-10 px-6 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600 transition-colors"
+            >
+              📥 Import Excel
+            </button>
+          </div>
+        ) : (
+          kelasGroups.map((group) => {
+            const isExpanded = expandedKelas.has(group.nama) || !!search
+            const activeSiswa = group.siswa.filter(s => s.is_active)
+            const inactiveSiswa = group.siswa.filter(s => !s.is_active)
+
+            return (
+              <div key={group.nama} className="bg-white rounded-xl border border-neutral-200 overflow-hidden animate-in">
+                {/* Class header */}
+                <button
+                  onClick={() => toggleKelas(group.nama)}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 transition-colors"
+                >
+                  <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0', getClassColor(group.nama))}>
+                    {group.nama}
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="font-bold text-sm text-neutral-800">Kelas {group.nama}</p>
+                    <p className="text-xs text-neutral-400">{activeSiswa.length} siswa aktif</p>
+                  </div>
+                  <svg
+                    width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+                    className={cn('text-neutral-400 transition-transform', isExpanded && 'rotate-180')}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+
+                {/* Siswa list */}
+                {isExpanded && (
+                  <div className="border-t border-neutral-100">
+                    {activeSiswa.map((siswa) => (
+                      <div key={siswa.id} className="flex items-center gap-3 px-4 py-2.5 border-b border-neutral-50 last:border-0">
+                        <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
+                          <span className="text-primary-700 font-bold text-xs">{siswa.nama_lengkap.charAt(0)}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm text-neutral-800 truncate">{siswa.nama_lengkap}</p>
+                          <p className="text-[11px] text-neutral-400">NISN: {siswa.nisn}</p>
+                        </div>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => setEditSiswa(siswa)}
+                            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-400 hover:text-primary-500 hover:bg-primary-50 transition-colors"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => setConfirmDeact(siswa.id)}
+                            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-400 hover:text-danger hover:bg-red-50 transition-colors"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                              <path d="M3 6h18M19 6l-1 14H6L5 6M10 11v6M14 11v6"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {inactiveSiswa.length > 0 && (
+                      <div className="px-4 py-2 bg-neutral-50">
+                        <p className="text-[11px] text-neutral-400 font-semibold">{inactiveSiswa.length} siswa nonaktif</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })
+        )}
+      </div>
+
+      {/* Confirm Delete All Modal */}
+      {confirmDeleteAll && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-xl p-4">
+            <h3 className="font-bold text-neutral-800 mb-2">Nonaktifkan Semua Siswa?</h3>
+            <p className="text-sm text-neutral-500 mb-4">Semua siswa aktif akan dinonaktifkan. Data historis tetap tersimpan.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setConfirmDeleteAll(false)} className="flex-1 h-11 border border-neutral-200 rounded-lg text-sm font-semibold text-neutral-600">Batal</button>
+              <button onClick={handleDeleteAll} className="flex-1 h-11 bg-danger text-white rounded-lg text-sm font-semibold">Nonaktifkan Semua</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Deactivate Modal */}
+      {confirmDeact && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-xl p-4">
+            <h3 className="font-bold text-neutral-800 mb-2">Nonaktifkan Siswa?</h3>
+            <p className="text-sm text-neutral-500 mb-4">Data historis tetap tersimpan.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setConfirmDeact(null)} className="flex-1 h-11 border border-neutral-200 rounded-lg text-sm font-semibold text-neutral-600">Batal</button>
+              <button onClick={() => handleDeactivate(confirmDeact)} className="flex-1 h-11 bg-danger text-white rounded-lg text-sm font-semibold">Nonaktifkan</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       {showImport && (

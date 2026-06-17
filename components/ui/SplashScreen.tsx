@@ -19,8 +19,8 @@ export function SplashScreen() {
       className={`fixed inset-0 z-[100] bg-primary-700 flex flex-col items-center justify-center transition-opacity duration-500 ${fadeOut ? 'opacity-0' : 'opacity-100'}`}
     >
       {/* Logo */}
-      <div className="w-24 h-24 bg-white/15 rounded-2xl flex items-center justify-center mb-6 backdrop-blur-sm border border-white/20 animate-pulse">
-        <span className="font-display text-white text-4xl font-bold">س</span>
+      <div className="w-28 h-28 rounded-2xl overflow-hidden mb-6 shadow-lg animate-pulse">
+        <img src="/logo.png" alt="Logo SIMAK" className="w-full h-full object-contain bg-white" />
       </div>
 
       {/* App name */}

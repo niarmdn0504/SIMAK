@@ -132,6 +132,7 @@ export interface Database {
           id:              string
           tahun_ajaran_id: string
           nama_item:       string
+          parent_id:       string | null
           urutan:          number
           is_active:       boolean
           created_at:      string
@@ -141,6 +142,7 @@ export interface Database {
           id?:             string
           tahun_ajaran_id: string
           nama_item:       string
+          parent_id?:      string | null
           urutan?:         number
           is_active?:      boolean
           created_at?:     string
@@ -148,6 +150,7 @@ export interface Database {
         }
         Update: {
           nama_item?:  string
+          parent_id?:  string | null
           urutan?:     number
           is_active?:  boolean
           updated_at?: string

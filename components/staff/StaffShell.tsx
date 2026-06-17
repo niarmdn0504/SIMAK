@@ -31,7 +31,6 @@ interface MenuItem {
 const MENU_ITEMS: MenuItem[] = [
   { href: '/admin',              label: 'Dashboard',      icon: <IconDashboard />,  roles: ['admin'] },
   { href: '/admin/siswa',        label: 'Kelola Siswa',   icon: <IconSiswa />,      roles: ['admin'] },
-  { href: '/admin/kelas',        label: 'Kelola Kelas',   icon: <IconKelas />,      roles: ['admin'] },
   { href: '/admin/tahun-ajaran', label: 'Tahun Ajaran',   icon: <IconTahun />,      roles: ['admin'] },
   { href: '/admin/mutabaah-items', label: 'Item Mutabaah', icon: <IconMutabaah />, roles: ['admin'] },
   { href: '/admin/staff',        label: 'Kelola Guru',    icon: <IconStaff />,      roles: ['admin'] },
@@ -172,8 +171,8 @@ function SidebarContent({
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 h-16 border-b border-primary-700/50 flex-shrink-0">
-        <div className="w-9 h-9 bg-white/15 rounded-lg flex items-center justify-center">
-          <span className="font-display text-white text-lg font-bold">س</span>
+        <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-white">
+          <img src="/logo.png" alt="SIMAK" className="w-full h-full object-contain" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-display font-bold text-lg leading-tight">SIMAK</p>

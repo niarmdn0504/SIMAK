@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   description: 'Aplikasi Monitoring Akhlak dan Karakter SDIT Al-Kautsar Mukomuko',
   manifest:    '/manifest.json',
   icons: {
-    icon: '/favicon.svg',
+    icon: '/logo.png',
   },
   appleWebApp: {
     capable:       true,
