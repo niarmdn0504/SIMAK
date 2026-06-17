@@ -93,15 +93,14 @@ export default function AdminSiswaPage() {
   }
 
   async function handleDeleteAll() {
-    const activeIds = siswaList.filter(s => s.is_active).map(s => s.id)
-    let deleted = 0
-    for (const id of activeIds) {
-      const res = await fetch(`/api/admin/siswa/${id}`, { method: 'DELETE' })
-      if (res.ok) deleted++
+    const res = await fetch('/api/admin/siswa/delete-all', { method: 'POST' })
+    if (res.ok) {
+      showToast('Semua siswa berhasil dihapus', 'success')
+      setConfirmDeleteAll(false)
+      fetchSiswa()
+    } else {
+      showToast('Gagal menghapus data', 'error')
     }
-    showToast(`${deleted} siswa dinonaktifkan`, 'success')
-    setConfirmDeleteAll(false)
-    fetchSiswa()
   }
 
   const CLASS_COLORS: Record<string, string> = {
@@ -155,7 +154,7 @@ export default function AdminSiswaPage() {
             onClick={() => setConfirmDeleteAll(true)}
             className="text-xs text-danger font-semibold hover:underline"
           >
-            Nonaktifkan Semua
+            Hapus Semua
           </button>
         )}
       </div>
@@ -258,11 +257,11 @@ export default function AdminSiswaPage() {
       {confirmDeleteAll && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-xl p-4">
-            <h3 className="font-bold text-neutral-800 mb-2">Nonaktifkan Semua Siswa?</h3>
-            <p className="text-sm text-neutral-500 mb-4">Semua siswa aktif akan dinonaktifkan. Data historis tetap tersimpan.</p>
+            <h3 className="font-bold text-neutral-800 mb-2">Hapus Semua Siswa?</h3>
+            <p className="text-sm text-neutral-500 mb-4">Semua data siswa akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.</p>
             <div className="flex gap-3">
               <button onClick={() => setConfirmDeleteAll(false)} className="flex-1 h-11 border border-neutral-200 rounded-lg text-sm font-semibold text-neutral-600">Batal</button>
-              <button onClick={handleDeleteAll} className="flex-1 h-11 bg-danger text-white rounded-lg text-sm font-semibold">Nonaktifkan Semua</button>
+              <button onClick={handleDeleteAll} className="flex-1 h-11 bg-danger text-white rounded-lg text-sm font-semibold">Hapus Semua</button>
             </div>
           </div>
         </div>
