@@ -90,9 +90,10 @@ export default async function DashboardPage() {
       children: p.children ?? [],
     }))
 
-    // Calculate percentage based on ALL items (including children)
-    const totalItems   = allItems.length
-    const checkedItems = allItems.filter(i => i.is_checked).length
+    // Calculate percentage based on leaf items only (children, not parents)
+    const leafItems    = hierarchicalItems.flatMap(p => p.children.length > 0 ? p.children : [p])
+    const totalItems   = leafItems.length
+    const checkedItems = leafItems.filter(i => i.is_checked).length
     const percentage   = totalItems > 0
       ? Math.round((checkedItems / totalItems) * 100)
       : 0

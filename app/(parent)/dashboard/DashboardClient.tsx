@@ -153,8 +153,10 @@ function MutabaahHarian({
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [savingId, setSavingId] = useState<string | null>(null)
 
-  // Hitung total dan checked (termasuk children)
-  const allItems = items.flatMap(p => [p, ...(p.children ?? [])])
+  // Hitung dari leaf items saja (parent items tidak dihitung)
+  const allItems = items.flatMap(p =>
+    p.children && p.children.length > 0 ? p.children : [p]
+  )
   const totalItems   = allItems.length
   const checkedItems = allItems.filter(i => i.is_checked).length
   const isAllDone    = totalItems > 0 && checkedItems === totalItems

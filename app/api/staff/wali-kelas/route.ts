@@ -51,14 +51,18 @@ export async function GET(request: NextRequest) {
     const aktivSiswa = (siswaKelas ?? []).filter((r: any) => r.siswa?.is_active)
     const siswaIds   = aktivSiswa.map((r: any) => r.siswa.id as string)
 
-    // Ambil total item mutabaah aktif
-    const { data: items } = await supabase
+    // Ambil semua item untuk hitung leaf items only
+    const { data: allItems } = await supabase
       .from('mutabaah_item')
-      .select('id')
+      .select('id, parent_id')
       .eq('tahun_ajaran_id', tahunAjaran.id)
       .eq('is_active', true)
 
-    const totalItems = items?.length ?? 0
+    // Leaf items = items whose id is NOT referenced as parent_id by any other item
+    const itemList  = allItems ?? []
+    const parentIds = new Set(itemList.map(i => i.parent_id).filter(Boolean))
+    const leafItems = itemList.filter(i => !parentIds.has(i.id))
+    const totalItems = leafItems.length
 
     // Ambil semua log hari ini untuk siswa ini
     const { data: logs } = await supabase

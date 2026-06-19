@@ -158,9 +158,19 @@ export async function GET(request: NextRequest) {
       parent_id:  item.parent_id,
     }))
 
-    const checked    = itemsWithStatus.filter(i => i.is_checked).length
-    const percentage = itemsWithStatus.length > 0
-      ? Math.round((checked / itemsWithStatus.length) * 100)
+    // Build hierarchy for percentage — count leaf items only
+    const parentItems = itemsWithStatus.filter(i => !i.parent_id)
+    const childItems  = itemsWithStatus.filter(i => i.parent_id)
+    const hierarchicalItems = parentItems.map(p => ({
+      ...p,
+      children: childItems.filter(c => c.parent_id === p.id),
+    }))
+    const leafItems  = hierarchicalItems.flatMap(p =>
+      p.children.length > 0 ? p.children : [p]
+    )
+    const checked    = leafItems.filter(i => i.is_checked).length
+    const percentage = leafItems.length > 0
+      ? Math.round((checked / leafItems.length) * 100)
       : 0
 
     return NextResponse.json({

@@ -132,8 +132,10 @@ export function useToggleMutabaah() {
           return item
         })
 
-        // Recalculate percentage from all items (including children)
-        const allItems = updatedItems.flatMap(p => [p, ...(p.children ?? [])])
+        // Recalculate percentage from leaf items only (not parents)
+        const allItems = updatedItems.flatMap(p =>
+          p.children && p.children.length > 0 ? p.children : [p]
+        )
         const checked    = allItems.filter(i => i.is_checked).length
         const percentage = allItems.length > 0
           ? Math.round((checked / allItems.length) * 100)

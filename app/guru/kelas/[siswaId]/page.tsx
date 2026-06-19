@@ -8,6 +8,15 @@ interface Props {
   params: Promise<{ siswaId: string }>
 }
 
+interface MutabaahItemWithChildren {
+  id:         string
+  nama_item:  string
+  urutan:     number
+  is_checked: boolean
+  parent_id:  string | null
+  children:   MutabaahItemWithChildren[]
+}
+
 export default async function GuruKelasSiswaPage({ params }: Props) {
   const session = await getStaffSession()
   if (!session) redirect('/login')
@@ -43,10 +52,11 @@ export default async function GuruKelasSiswaPage({ params }: Props) {
 
   const tanggal = getTodayWIB()
 
+  // Fetch items with parent_id
   const { data: items } = tahunAjaran
     ? await supabase
         .from('mutabaah_item')
-        .select('id, nama_item, urutan')
+        .select('id, nama_item, urutan, parent_id')
         .eq('tahun_ajaran_id', tahunAjaran.id)
         .eq('is_active', true)
         .order('urutan', { ascending: true })
@@ -61,15 +71,32 @@ export default async function GuruKelasSiswaPage({ params }: Props) {
   const logMap = new Map(logs?.map(l => [l.item_id, l.is_checked]) ?? [])
   const isLocked = new Date() > new Date(getLockedAfter(tanggal))
 
-  const mutabaahItems = (items ?? []).map(item => ({
+  // Map to items with status
+  const allItems: MutabaahItemWithChildren[] = (items ?? []).map(item => ({
     id:         item.id,
     nama_item:  item.nama_item,
+    urutan:     item.urutan,
     is_checked: logMap.get(item.id) ?? false,
+    parent_id:  item.parent_id ?? null,
+    children:   [],
   }))
 
-  const checked    = mutabaahItems.filter(i => i.is_checked).length
-  const percentage = mutabaahItems.length > 0
-    ? Math.round((checked / mutabaahItems.length) * 100)
+  // Build hierarchy
+  const parentItems = allItems.filter(i => !i.parent_id)
+  const childItems  = allItems.filter(i => i.parent_id)
+  for (const parent of parentItems) {
+    parent.children = childItems.filter(c => c.parent_id === parent.id)
+  }
+  const hierarchicalItems = parentItems.map(p => ({
+    ...p,
+    children: p.children,
+  }))
+
+  // Count leaf items only
+  const leafItems    = hierarchicalItems.flatMap(p => p.children.length > 0 ? p.children : [p])
+  const checked      = leafItems.filter(i => i.is_checked).length
+  const percentage   = leafItems.length > 0
+    ? Math.round((checked / leafItems.length) * 100)
     : 0
 
   const { data: tahfizLast } = await supabase
@@ -91,7 +118,7 @@ export default async function GuruKelasSiswaPage({ params }: Props) {
   return (
     <WaliKelasSiswaClient
       siswa={{ ...siswa, nama_kelas: namaKelas }}
-      mutabaahItems={mutabaahItems}
+      mutabaahItems={hierarchicalItems}
       percentage={percentage}
       isLocked={isLocked}
       tanggal={tanggal}

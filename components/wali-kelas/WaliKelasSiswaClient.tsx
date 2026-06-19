@@ -5,6 +5,7 @@
 
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn }        from '@/lib/utils/cn'
 import { formatTanggal } from '@/lib/utils/date'
@@ -13,6 +14,8 @@ interface MutabaahItem {
   id:         string
   nama_item:  string
   is_checked: boolean
+  parent_id?: string | null
+  children?:  MutabaahItem[]
 }
 
 interface Props {
@@ -53,7 +56,12 @@ export function WaliKelasSiswaClient({
   siswa, mutabaahItems, percentage, isLocked, tanggal, tahfizLast, wafaLast, backHref = '/wali-kelas',
 }: Props) {
   const router = useRouter()
-  const checked = mutabaahItems.filter(i => i.is_checked).length
+
+  // Count leaf items only for progress
+  const leafItems = mutabaahItems.flatMap(p =>
+    p.children && p.children.length > 0 ? p.children : [p]
+  )
+  const checked = leafItems.filter(i => i.is_checked).length
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -119,7 +127,7 @@ export function WaliKelasSiswaClient({
           </div>
 
           <p className="text-xs text-neutral-500 mb-4">
-            {checked} dari {mutabaahItems.length} ibadah terisi
+            {checked} dari {leafItems.length} ibadah terisi
           </p>
 
           {mutabaahItems.length === 0 ? (
@@ -127,38 +135,7 @@ export function WaliKelasSiswaClient({
           ) : (
             <div className="space-y-2">
               {mutabaahItems.map(item => (
-                <div
-                  key={item.id}
-                  className={cn(
-                    'flex items-center gap-3 p-3 rounded-lg border',
-                    item.is_checked
-                      ? 'bg-primary-50 border-primary-200'
-                      : 'bg-neutral-50 border-neutral-200'
-                  )}
-                >
-                  {/* Checkbox display (read only) */}
-                  <div className={cn(
-                    'w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0',
-                    item.is_checked
-                      ? 'bg-primary-500 border-primary-500'
-                      : 'border-neutral-300'
-                  )}>
-                    {item.is_checked && (
-                      <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                        <path d="M2.5 7L5.5 10L11.5 4" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    )}
-                  </div>
-                  <span className={cn(
-                    'text-sm font-medium flex-1',
-                    item.is_checked ? 'text-primary-700' : 'text-neutral-500'
-                  )}>
-                    {item.nama_item}
-                  </span>
-                  {item.is_checked && (
-                    <span className="text-xs text-primary-500 font-semibold">✓</span>
-                  )}
-                </div>
+                <MutabaahItemRow key={item.id} item={item} />
               ))}
             </div>
           )}
@@ -242,6 +219,117 @@ export function WaliKelasSiswaClient({
         )}
 
       </div>
+    </div>
+  )
+}
+
+// ─── Mutabaah item row ──────────────────────────────
+function MutabaahItemRow({ item }: { item: MutabaahItem }) {
+  const [expanded, setExpanded] = useState(false)
+  const hasChildren = item.children && item.children.length > 0
+
+  if (!hasChildren) {
+    return (
+      <div
+        className={cn(
+          'flex items-center gap-3 p-3 rounded-lg border',
+          item.is_checked
+            ? 'bg-primary-50 border-primary-200'
+            : 'bg-neutral-50 border-neutral-200'
+        )}
+      >
+        <div className={cn(
+          'w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0',
+          item.is_checked
+            ? 'bg-primary-500 border-primary-500'
+            : 'border-neutral-300'
+        )}>
+          {item.is_checked && (
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+              <path d="M2.5 7L5.5 10L11.5 4" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </div>
+        <span className={cn(
+          'text-sm font-medium flex-1',
+          item.is_checked ? 'text-primary-700' : 'text-neutral-500'
+        )}>
+          {item.nama_item}
+        </span>
+        {item.is_checked && (
+          <span className="text-xs text-primary-500 font-semibold">✓</span>
+        )}
+      </div>
+    )
+  }
+
+  const children   = item.children ?? []
+  const childChecked = children.filter(c => c.is_checked).length
+  const allDone = childChecked === children.length
+
+  return (
+    <div className={cn(
+      'rounded-lg border overflow-hidden',
+      allDone ? 'bg-primary-50 border-primary-200' : 'bg-white border-neutral-200'
+    )}>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center gap-3 p-3 text-left"
+      >
+        <div className={cn(
+          'w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold',
+          allDone ? 'bg-primary-500 text-white' : 'bg-neutral-200 text-neutral-500'
+        )}>
+          {allDone ? '✓' : childChecked}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-neutral-800">{item.nama_item}</p>
+          <p className="text-xs text-neutral-400">{childChecked} dari {children.length}</p>
+        </div>
+        <svg
+          width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+          className={cn('text-neutral-400 transition-transform', expanded && 'rotate-180')}
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+
+          {expanded && (
+            <div className="px-3 pb-3 space-y-1.5 border-t border-neutral-100 pt-1.5">
+              {children.map(child => (
+            <div
+              key={child.id}
+              className={cn(
+                'flex items-center gap-3 p-2.5 rounded-lg border',
+                child.is_checked
+                  ? 'bg-primary-50 border-primary-200'
+                  : 'bg-neutral-50 border-neutral-200'
+              )}
+            >
+              <div className={cn(
+                'w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0',
+                child.is_checked ? 'bg-primary-500 border-primary-500' : 'border-neutral-300'
+              )}>
+                {child.is_checked && (
+                  <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
+                    <path d="M2.5 7L5.5 10L11.5 4" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </div>
+              <span className={cn(
+                'text-sm font-medium flex-1',
+                child.is_checked ? 'text-primary-700' : 'text-neutral-500'
+              )}>
+                {child.nama_item}
+              </span>
+              {child.is_checked && (
+                <span className="text-xs text-primary-500 font-semibold">✓</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
