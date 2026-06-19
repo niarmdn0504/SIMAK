@@ -35,8 +35,8 @@ export async function GET(request: NextRequest) {
       `)
       .eq('tahun_ajaran_id', tahunAjaran.id)
 
-    // Wali kelas: hanya kelas sendiri
-    if (session.role === 'wali_kelas') {
+    // Non-admin: hanya siswa di kelas sendiri
+    if (session.role !== 'admin') {
       const { data: kelasSaya } = await supabase
         .from('kelas')
         .select('id')

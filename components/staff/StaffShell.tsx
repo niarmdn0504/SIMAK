@@ -36,6 +36,7 @@ const MENU_ITEMS: MenuItem[] = [
   { href: '/admin/staff',        label: 'Kelola Guru',    icon: <IconStaff />,      roles: ['admin'] },
   { href: '/admin/export',       label: 'Export Data',    icon: <IconExport />,     roles: ['admin'] },
   { href: '/admin/kenaikan-kelas', label: 'Kenaikan Kelas', icon: <IconKenaikan />, roles: ['admin'] },
+  { href: '/admin/assign-guru',   label: 'Assign Guru',    icon: <IconWaliKelas />, roles: ['admin'] },
   { href: '/tahfiz',             label: 'Tahfiz',         icon: <IconTahfiz />,     roles: ['guru_tahfiz'] },
   { href: '/wafa',               label: 'Wafa',           icon: <IconWafa />,       roles: ['guru_wafa'] },
   { href: '/wali-kelas',         label: 'Wali Kelas',     icon: <IconWaliKelas />,  roles: ['wali_kelas'] },
