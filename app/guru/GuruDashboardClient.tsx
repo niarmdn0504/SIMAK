@@ -1,14 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import type { StaffRole } from '@/lib/types/app'
-
-const ROLE_LABEL: Record<StaffRole, string> = {
-  admin:       'Admin',
-  wali_kelas:  'Wali Kelas',
-  guru_tahfiz: 'Guru Tahfiz',
-  guru_wafa:   'Guru Wafa',
-}
 
 interface Stats {
   totalSiswa:   number
@@ -22,46 +14,36 @@ interface MenuCard {
   label:    string
   icon:     string
   color:    string
-  roles:    StaffRole[]
 }
 
 const MENU_CARDS: MenuCard[] = [
   {
-    href: '/guru/tahfiz',
-    label: 'Tahfiz',
-    icon: '📖',
-    color: 'from-green-500 to-green-600',
-    roles: ['guru_tahfiz'],
+    href: '/guru/kelas',
+    label: 'Kelas / Mutabaah',
+    icon: '🏫',
+    color: 'from-blue-500 to-blue-600',
   },
   {
     href: '/guru/wafa',
     label: 'Wafa',
     icon: '📚',
     color: 'from-amber-500 to-amber-600',
-    roles: ['guru_wafa'],
   },
   {
-    href: '/guru/wali-kelas',
-    label: 'Wali Kelas',
-    icon: '🏫',
-    color: 'from-blue-500 to-blue-600',
-    roles: ['wali_kelas'],
+    href: '/guru/tahfiz',
+    label: 'Tahfizh',
+    icon: '📖',
+    color: 'from-green-500 to-green-600',
   },
 ]
 
 export function GuruDashboardClient({
   nama,
-  roles,
   stats,
 }: {
   nama:   string
-  roles:  StaffRole[]
   stats:  Stats
 }) {
-  const filteredCards = MENU_CARDS.filter(card =>
-    card.roles.some(r => roles.includes(r))
-  )
-
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
       {/* Welcome banner */}
@@ -73,16 +55,6 @@ export function GuruDashboardClient({
             {stats.tahunAktif !== 'Belum ada' ? `Tahun Ajaran ${stats.tahunAktif}` : 'Dashboard Guru'}
           </p>
           <h1 className="text-2xl font-bold mt-1">Halo, {nama.split(' ')[0]}!</h1>
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {roles.map(r => (
-              <span
-                key={r}
-                className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 uppercase tracking-wide"
-              >
-                {ROLE_LABEL[r]}
-              </span>
-            ))}
-          </div>
         </div>
       </div>
 
@@ -109,7 +81,7 @@ export function GuruDashboardClient({
       <div>
         <h2 className="text-sm font-semibold text-neutral-600 mb-3">Menu</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {filteredCards.map(card => (
+          {MENU_CARDS.map(card => (
             <Link
               key={card.href}
               href={card.href}

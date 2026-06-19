@@ -8,15 +8,10 @@ import { getStaffSession }    from '@/lib/auth/staff'
 import { createServerClient } from '@/lib/supabase/server'
 import { GuruDashboardClient } from './GuruDashboardClient'
 
-const GURU_ROLES = ['wali_kelas', 'guru_tahfiz', 'guru_wafa'] as const
-
 export default async function GuruPage() {
   const session = await getStaffSession()
   if (!session) redirect('/login')
   if (session.role === 'admin') redirect('/admin')
-
-  const hasGuruRole = session.roles.some(r => GURU_ROLES.includes(r as any))
-  if (!hasGuruRole) redirect('/login')
 
   const supabase = await createServerClient()
 
@@ -48,7 +43,6 @@ export default async function GuruPage() {
   return (
     <GuruDashboardClient
       nama={session.nama}
-      roles={session.roles}
       stats={{
         totalSiswa:  totalSiswa ?? 0,
         totalKelas:  totalKelas ?? 0,

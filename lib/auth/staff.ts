@@ -25,22 +25,12 @@ export async function getStaffSession(): Promise<StaffSessionData | null> {
 
     if (profileError || !profile || !profile.is_active) return null
 
-    // Query multi-role dari user_roles table
-    const { data: roleRows } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-
-    const roles: StaffRole[] = roleRows && roleRows.length > 0
-      ? roleRows.map(r => r.role as StaffRole)
-      : [profile.role as StaffRole]
-
     return {
       userId: user.id,
       email:  user.email ?? '',
       nama:   profile.nama,
       role:   profile.role as StaffRole,
-      roles,
+      roles:  [profile.role as StaffRole],
     }
   } catch {
     return null

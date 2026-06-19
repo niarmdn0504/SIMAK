@@ -1,8 +1,3 @@
-// ============================================================
-// app/guru/wali-kelas/[siswaId]/page.tsx
-// Detail mutabaah satu siswa — read only untuk wali kelas
-// ============================================================
-
 import { redirect }           from 'next/navigation'
 import { getStaffSession }    from '@/lib/auth/staff'
 import { createServerClient } from '@/lib/supabase/server'
@@ -13,10 +8,10 @@ interface Props {
   params: Promise<{ siswaId: string }>
 }
 
-export default async function GuruWaliKelasSiswaPage({ params }: Props) {
+export default async function GuruKelasSiswaPage({ params }: Props) {
   const session = await getStaffSession()
   if (!session) redirect('/login')
-  if (!session.roles.includes('wali_kelas') && session.role !== 'admin') redirect('/guru')
+  if (session.role === 'admin') redirect('/admin')
 
   const { siswaId } = await params
   const supabase    = await createServerClient()
@@ -27,7 +22,7 @@ export default async function GuruWaliKelasSiswaPage({ params }: Props) {
     .eq('id', siswaId)
     .single()
 
-  if (!siswa) redirect('/guru/wali-kelas')
+  if (!siswa) redirect('/guru/kelas')
 
   const { data: tahunAjaran } = await supabase
     .from('tahun_ajaran')
@@ -102,7 +97,7 @@ export default async function GuruWaliKelasSiswaPage({ params }: Props) {
       tanggal={tanggal}
       tahfizLast={tahfizLast ?? null}
       wafaLast={wafaLast ?? null}
-      backHref="/guru/wali-kelas"
+      backHref="/guru/kelas"
     />
   )
 }

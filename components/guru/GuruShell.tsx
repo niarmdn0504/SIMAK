@@ -5,45 +5,24 @@ import Link                                    from 'next/link'
 import { useRouter, usePathname }              from 'next/navigation'
 import { createClient }                        from '@/lib/supabase/client'
 import { cn }                                  from '@/lib/utils/cn'
-import type { StaffRole }                      from '@/lib/types/app'
 
-const ROLE_LABEL: Record<StaffRole, string> = {
-  admin:       'Admin',
-  wali_kelas:  'Wali Kelas',
-  guru_tahfiz: 'Guru Tahfiz',
-  guru_wafa:   'Guru Wafa',
-}
-
-interface MenuItem {
-  href:    string
-  label:   string
-  icon:    React.ReactNode
-  roles:   StaffRole[]
-}
-
-const MENU_ITEMS: MenuItem[] = [
-  { href: '/guru',              label: 'Dashboard',   icon: <IconDashboard />,  roles: ['wali_kelas', 'guru_tahfiz', 'guru_wafa'] },
-  { href: '/guru/tahfiz',       label: 'Tahfiz',      icon: <IconTahfiz />,     roles: ['guru_tahfiz'] },
-  { href: '/guru/wafa',         label: 'Wafa',        icon: <IconWafa />,       roles: ['guru_wafa'] },
-  { href: '/guru/wali-kelas',   label: 'Wali Kelas',  icon: <IconWaliKelas />,  roles: ['wali_kelas'] },
-]
+const MENU_ITEMS = [
+  { href: '/guru',           label: 'Dashboard',      icon: <IconDashboard /> },
+  { href: '/guru/kelas',     label: 'Kelas / Mutabaah', icon: <IconWaliKelas /> },
+  { href: '/guru/wafa',      label: 'Wafa',           icon: <IconWafa /> },
+  { href: '/guru/tahfiz',    label: 'Tahfizh',        icon: <IconTahfiz /> },
+] as const
 
 export function GuruShell({
   children,
   nama,
-  roles,
 }: {
   children: React.ReactNode
   nama:     string
-  roles:    StaffRole[]
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const router   = useRouter()
   const pathname = usePathname()
-
-  const filteredMenu = MENU_ITEMS.filter(item =>
-    item.roles.some(r => roles.includes(r))
-  )
 
   const parentPath = pathname.split('/').filter(Boolean).length > 2
     ? pathname.substring(0, pathname.lastIndexOf('/')) || '/guru'
@@ -63,9 +42,7 @@ export function GuruShell({
       <aside className="hidden md:flex md:flex-col md:w-64 md:fixed md:inset-y-0 bg-primary-800 text-white z-50">
         <SidebarContent
           nama={nama}
-          roles={roles}
           pathname={pathname}
-          filteredMenu={filteredMenu}
           onLogout={handleLogout}
         />
       </aside>
@@ -80,9 +57,7 @@ export function GuruShell({
           <aside className="absolute inset-y-0 left-0 w-72 bg-primary-800 text-white shadow-2xl transition-transform animate-in slide-in-from-left">
             <SidebarContent
               nama={nama}
-              roles={roles}
               pathname={pathname}
-              filteredMenu={filteredMenu}
               onLogout={() => { setSidebarOpen(false); handleLogout() }}
               onClose={() => setSidebarOpen(false)}
             />
@@ -143,18 +118,14 @@ export function GuruShell({
 // ─── Sidebar Content ────────────────────────────────
 function SidebarContent({
   nama,
-  roles,
   pathname,
-  filteredMenu,
   onLogout,
   onClose,
 }: {
-  nama:          string
-  roles:         StaffRole[]
-  pathname:      string
-  filteredMenu:  MenuItem[]
-  onLogout:      () => void
-  onClose?:      () => void
+  nama:     string
+  pathname: string
+  onLogout: () => void
+  onClose?: () => void
 }) {
   return (
     <div className="flex flex-col h-full">
@@ -180,27 +151,9 @@ function SidebarContent({
         )}
       </div>
 
-      {/* Role badges */}
-      <div className="px-5 pt-4 pb-2 flex flex-wrap gap-1.5">
-        {roles.map(r => (
-          <span
-            key={r}
-            className={cn(
-              'text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide',
-              r === 'wali_kelas'  ? 'bg-blue-100 text-blue-700' :
-              r === 'guru_tahfiz' ? 'bg-green-100 text-green-700' :
-              r === 'guru_wafa'   ? 'bg-amber-100 text-amber-700' :
-              'bg-purple-100 text-purple-700'
-            )}
-          >
-            {ROLE_LABEL[r]}
-          </span>
-        ))}
-      </div>
-
       {/* Menu */}
-      <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
-        {filteredMenu.map((item) => {
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        {MENU_ITEMS.map((item) => {
           const isActive = pathname === item.href ||
             (item.href !== '/guru' && pathname.startsWith(item.href + '/'))
           return (
@@ -233,9 +186,6 @@ function SidebarContent({
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-white truncate leading-tight">{nama}</p>
-            <p className="text-primary-300 text-[11px] leading-tight truncate">
-              {roles.map(r => ROLE_LABEL[r]).join(' & ')}
-            </p>
           </div>
           <button
             onClick={onLogout}

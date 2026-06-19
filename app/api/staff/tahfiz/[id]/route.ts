@@ -5,7 +5,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
-import { requireRole }               from '@/lib/auth/staff'
+import { requireStaffSession }       from '@/lib/auth/staff'
 import { createServerClient }        from '@/lib/supabase/server'
 
 export async function PATCH(
@@ -13,7 +13,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session  = await requireRole(['guru_tahfiz', 'admin'])
+    const session  = await requireStaffSession()
     const supabase = await createServerClient()
     const { id }   = await params
     const body     = await request.json()
@@ -62,7 +62,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session  = await requireRole(['guru_tahfiz', 'admin'])
+    const session  = await requireStaffSession()
     const supabase = await createServerClient()
     const { id }   = await params
 

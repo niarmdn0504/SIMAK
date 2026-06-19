@@ -10,7 +10,7 @@ import { SiswaList }           from '@/components/siswa/SiswaList'
 export default async function GuruTahfizPage() {
   const session = await getStaffSession()
   if (!session) redirect('/login')
-  if (!session.roles.includes('guru_tahfiz') && session.role !== 'admin') redirect('/guru')
+  if (session.role === 'admin') redirect('/admin')
 
   return (
     <div className="flex flex-col h-screen">

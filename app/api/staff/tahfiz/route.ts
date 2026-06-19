@@ -5,12 +5,12 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
-import { requireRole }               from '@/lib/auth/staff'
+import { requireStaffSession }       from '@/lib/auth/staff'
 import { createServerClient }        from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
   try {
-    await requireRole(['guru_tahfiz', 'admin', 'wali_kelas'])
+    await requireStaffSession()
     const supabase = await createServerClient()
     const { searchParams } = new URL(request.url)
     const siswaId = searchParams.get('siswaId')
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session  = await requireRole(['guru_tahfiz', 'admin'])
+    const session  = await requireStaffSession()
     const supabase = await createServerClient()
     const body     = await request.json()
 

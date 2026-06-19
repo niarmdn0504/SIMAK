@@ -4,13 +4,13 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
-import { requireRole }               from '@/lib/auth/staff'
+import { requireStaffSession }       from '@/lib/auth/staff'
 import { createServerClient }        from '@/lib/supabase/server'
 import { getTodayWIB }               from '@/lib/utils/date'
 
 export async function GET(request: NextRequest) {
   try {
-    const session  = await requireRole(['wali_kelas', 'admin'])
+    const session  = await requireStaffSession()
     const supabase = await createServerClient()
     const { searchParams } = new URL(request.url)
     const tanggal  = searchParams.get('tanggal') ?? getTodayWIB()
