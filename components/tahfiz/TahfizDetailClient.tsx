@@ -24,9 +24,10 @@ interface Props {
   siswa:    SiswaInfo
   guruId:   string
   guruNama: string
+  backHref?: string
 }
 
-export function TahfizDetailClient({ siswa, guruId, guruNama }: Props) {
+export function TahfizDetailClient({ siswa, guruId, guruNama, backHref = '/tahfiz' }: Props) {
   const router = useRouter()
   const [showForm, setShowForm] = useState(false)
 
@@ -37,7 +38,7 @@ export function TahfizDetailClient({ siswa, guruId, guruNama }: Props) {
       {/* Header siswa */}
       <div className="bg-white border-b border-neutral-100 px-4 py-4">
         <button
-          onClick={() => router.push('/tahfiz')}
+          onClick={() => router.push(backHref)}
           className="flex items-center gap-1.5 text-primary-600 text-sm font-medium mb-3 hover:text-primary-700"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">

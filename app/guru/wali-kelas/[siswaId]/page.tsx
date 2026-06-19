@@ -1,36 +1,34 @@
 // ============================================================
-// app/(staff)/wali-kelas/[siswaId]/page.tsx
+// app/guru/wali-kelas/[siswaId]/page.tsx
 // Detail mutabaah satu siswa — read only untuk wali kelas
 // ============================================================
 
 import { redirect }           from 'next/navigation'
 import { getStaffSession }    from '@/lib/auth/staff'
 import { createServerClient } from '@/lib/supabase/server'
-import { WaliKelasSiswaClient } from './WaliKelasSiswaClient'
+import { WaliKelasSiswaClient } from '@/components/wali-kelas/WaliKelasSiswaClient'
 import { getTodayWIB, getLockedAfter } from '@/lib/utils/date'
 
 interface Props {
   params: Promise<{ siswaId: string }>
 }
 
-export default async function WaliKelasSiswaPage({ params }: Props) {
+export default async function GuruWaliKelasSiswaPage({ params }: Props) {
   const session = await getStaffSession()
   if (!session) redirect('/login')
-  if (!['wali_kelas', 'admin'].includes(session.role)) redirect('/login')
+  if (!session.roles.includes('wali_kelas') && session.role !== 'admin') redirect('/guru')
 
   const { siswaId } = await params
   const supabase    = await createServerClient()
 
-  // Data siswa
   const { data: siswa } = await supabase
     .from('siswa')
     .select('id, nama_lengkap, nisn, photo_url, parent_name, parent_phone')
     .eq('id', siswaId)
     .single()
 
-  if (!siswa) redirect('/wali-kelas')
+  if (!siswa) redirect('/guru/wali-kelas')
 
-  // Kelas aktif
   const { data: tahunAjaran } = await supabase
     .from('tahun_ajaran')
     .select('id')
@@ -48,7 +46,6 @@ export default async function WaliKelasSiswaPage({ params }: Props) {
     namaKelas = (kelasData?.kelas as any)?.nama_kelas ?? '-'
   }
 
-  // Mutabaah hari ini
   const tanggal = getTodayWIB()
 
   const { data: items } = tahunAjaran
@@ -80,7 +77,6 @@ export default async function WaliKelasSiswaPage({ params }: Props) {
     ? Math.round((checked / mutabaahItems.length) * 100)
     : 0
 
-  // Tahfiz & wafa terakhir
   const { data: tahfizLast } = await supabase
     .from('tahfiz_log')
     .select('surah, ayat_awal, ayat_akhir, status, tanggal')
@@ -106,6 +102,7 @@ export default async function WaliKelasSiswaPage({ params }: Props) {
       tanggal={tanggal}
       tahfizLast={tahfizLast ?? null}
       wafaLast={wafaLast ?? null}
+      backHref="/guru/wali-kelas"
     />
   )
 }

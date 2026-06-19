@@ -102,9 +102,9 @@ export function LoginForm() {
 
         const redirectMap: Record<string, string> = {
           admin:       '/admin',
-          wali_kelas:  '/wali-kelas',
-          guru_tahfiz: '/tahfiz',
-          guru_wafa:   '/wafa',
+          wali_kelas:  '/guru',
+          guru_tahfiz: '/guru',
+          guru_wafa:   '/guru',
         }
 
         router.push(redirectMap[profile.role] ?? '/login')

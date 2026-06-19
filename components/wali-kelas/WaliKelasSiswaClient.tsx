@@ -31,6 +31,7 @@ interface Props {
   tanggal:       string
   tahfizLast:    { surah: string; ayat_awal: number | null; ayat_akhir: number | null; status: string; tanggal: string } | null
   wafaLast:      { jilid: string; halaman: number | null; status: string; tanggal: string } | null
+  backHref?:     string
 }
 
 const TAHFIZ_STATUS_COLOR: Record<string, string> = {
@@ -49,7 +50,7 @@ const WAFA_STATUS_LABEL: Record<string, string> = {
 }
 
 export function WaliKelasSiswaClient({
-  siswa, mutabaahItems, percentage, isLocked, tanggal, tahfizLast, wafaLast,
+  siswa, mutabaahItems, percentage, isLocked, tanggal, tahfizLast, wafaLast, backHref = '/wali-kelas',
 }: Props) {
   const router = useRouter()
   const checked = mutabaahItems.filter(i => i.is_checked).length
@@ -59,7 +60,7 @@ export function WaliKelasSiswaClient({
       {/* Header */}
       <div className="bg-white border-b border-neutral-100 px-4 py-4">
         <button
-          onClick={() => router.push('/wali-kelas')}
+          onClick={() => router.push(backHref)}
           className="flex items-center gap-1.5 text-primary-600 text-sm font-medium mb-3"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">

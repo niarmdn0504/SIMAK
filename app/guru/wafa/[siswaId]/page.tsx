@@ -1,21 +1,21 @@
 // ============================================================
-// app/(staff)/wafa/[siswaId]/page.tsx
-// Detail wafa satu siswa
+// app/guru/wafa/[siswaId]/page.tsx
+// Detail wafa satu siswa — server component
 // ============================================================
 
 import { redirect }           from 'next/navigation'
 import { getStaffSession }    from '@/lib/auth/staff'
 import { createServerClient } from '@/lib/supabase/server'
-import { WafaDetailClient }   from './WafaDetailClient'
+import { WafaDetailClient }   from '@/components/wafa/WafaDetailClient'
 
 interface Props {
   params: Promise<{ siswaId: string }>
 }
 
-export default async function WafaDetailPage({ params }: Props) {
+export default async function GuruWafaDetailPage({ params }: Props) {
   const session = await getStaffSession()
   if (!session) redirect('/login')
-  if (!['guru_wafa', 'admin'].includes(session.role)) redirect('/login')
+  if (!session.roles.includes('guru_wafa') && session.role !== 'admin') redirect('/guru')
 
   const { siswaId } = await params
   const supabase    = await createServerClient()
@@ -26,9 +26,8 @@ export default async function WafaDetailPage({ params }: Props) {
     .eq('id', siswaId)
     .single()
 
-  if (!siswa) redirect('/wafa')
+  if (!siswa) redirect('/guru/wafa')
 
-  // Ambil kelas aktif
   const { data: tahunAjaran } = await supabase
     .from('tahun_ajaran')
     .select('id')
@@ -46,7 +45,6 @@ export default async function WafaDetailPage({ params }: Props) {
     namaKelas = (kelasData?.kelas as any)?.nama_kelas ?? '-'
   }
 
-  // Ambil level wafa terakhir
   const { data: lastWafa } = await supabase
     .from('wafa_log')
     .select('jilid')
@@ -60,6 +58,7 @@ export default async function WafaDetailPage({ params }: Props) {
       siswa={{ ...siswa, nama_kelas: namaKelas }}
       guruId={session.userId}
       currentJilid={lastWafa?.jilid ?? null}
+      backHref="/guru/wafa"
     />
   )
 }

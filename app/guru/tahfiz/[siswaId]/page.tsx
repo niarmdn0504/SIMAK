@@ -1,54 +1,56 @@
 // ============================================================
-// app/(staff)/tahfiz/[siswaId]/page.tsx
-// Detail tahfiz satu siswa — riwayat + form input
+// app/guru/tahfiz/[siswaId]/page.tsx
+// Detail tahfiz satu siswa — server component
 // ============================================================
 
 import { redirect }            from 'next/navigation'
 import { getStaffSession }     from '@/lib/auth/staff'
 import { createServerClient }  from '@/lib/supabase/server'
-import { TahfizDetailClient }  from './TahfizDetailClient'
+import { TahfizDetailClient }  from '@/components/tahfiz/TahfizDetailClient'
 
 interface Props {
   params: Promise<{ siswaId: string }>
 }
 
-export default async function TahfizDetailPage({ params }: Props) {
+export default async function GuruTahfizDetailPage({ params }: Props) {
   const session = await getStaffSession()
   if (!session) redirect('/login')
-  if (!['guru_tahfiz', 'admin'].includes(session.role)) redirect('/login')
+  if (!session.roles.includes('guru_tahfiz') && session.role !== 'admin') redirect('/guru')
 
   const { siswaId } = await params
   const supabase    = await createServerClient()
 
-  // Ambil data siswa
   const { data: siswa } = await supabase
     .from('siswa')
     .select('id, nama_lengkap, nisn, photo_url')
     .eq('id', siswaId)
     .single()
 
-  if (!siswa) redirect('/tahfiz')
+  if (!siswa) redirect('/guru/tahfiz')
 
-  // Ambil kelas siswa saat ini
-  const { data: kelasData } = await supabase
-    .from('siswa_kelas')
-    .select('kelas:kelas_id ( nama_kelas )')
-    .eq('siswa_id', siswaId)
-    .in(
-      'tahun_ajaran_id',
-      (await supabase.from('tahun_ajaran').select('id').eq('is_active', true).single()).data
-        ? [(await supabase.from('tahun_ajaran').select('id').eq('is_active', true).single()).data!.id]
-        : []
-    )
+  const { data: tahunAjaran } = await supabase
+    .from('tahun_ajaran')
+    .select('id')
+    .eq('is_active', true)
     .single()
 
-  const namaKelas = (kelasData?.kelas as any)?.nama_kelas ?? '-'
+  let namaKelas = '-'
+  if (tahunAjaran) {
+    const { data: kelasData } = await supabase
+      .from('siswa_kelas')
+      .select('kelas:kelas_id ( nama_kelas )')
+      .eq('siswa_id', siswaId)
+      .eq('tahun_ajaran_id', tahunAjaran.id)
+      .single()
+    namaKelas = (kelasData?.kelas as any)?.nama_kelas ?? '-'
+  }
 
   return (
     <TahfizDetailClient
       siswa={{ ...siswa, nama_kelas: namaKelas }}
       guruId={session.userId}
       guruNama={session.nama}
+      backHref="/guru/tahfiz"
     />
   )
 }

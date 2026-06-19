@@ -48,8 +48,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Routes staff (tahfiz, wafa, wali-kelas, admin bisa overlap — cek Supabase Auth)
-  const staffRoutes = ['/tahfiz', '/wafa', '/wali-kelas', '/admin']
+  // Routes staff (guru, admin — cek Supabase Auth)
+  const staffRoutes = ['/guru', '/admin']
   const isStaffRoute = staffRoutes.some(r => pathname.startsWith(r))
 
   if (isStaffRoute) {

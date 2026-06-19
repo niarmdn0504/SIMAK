@@ -307,6 +307,26 @@ export interface Database {
         }
         Relationships: []
       }
+
+      user_roles: {
+        Row: {
+          id:         string
+          user_id:    string
+          role:       string
+          created_at: string
+        }
+        Insert: {
+          id?:        string
+          user_id:    string
+          role:       string
+          created_at?: string
+        }
+        Update: {
+          user_id?:   string
+          role?:      string
+        }
+        Relationships: []
+      }
     }
 
     Views: {}

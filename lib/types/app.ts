@@ -18,7 +18,8 @@ export interface StaffSessionData {
   userId: string
   email:  string
   nama:   string
-  role:   StaffRole
+  role:   StaffRole     // primary role (backward compat)
+  roles:  StaffRole[]   // all roles (multi-role)
 }
 
 // ----------------------------------------

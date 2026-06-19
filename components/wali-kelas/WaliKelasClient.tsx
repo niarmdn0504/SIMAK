@@ -38,7 +38,7 @@ const STATUS_CONFIG = {
   belum:    { label: 'Belum',    color: 'text-danger',   bg: 'bg-red-50',   border: 'border-red-200',    icon: '❌' },
 }
 
-export function WaliKelasClient({ namaGuru }: { namaGuru: string }) {
+export function WaliKelasClient({ namaGuru, detailPath = '/wali-kelas' }: { namaGuru: string; detailPath?: string }) {
   const router  = useRouter()
   const tanggal = getTodayWIB()
 
@@ -147,7 +147,7 @@ export function WaliKelasClient({ namaGuru }: { namaGuru: string }) {
       <FilterTabs siswaList={siswaList} />
 
       {/* Daftar siswa */}
-      <SiswaStatusList siswaList={siswaList} onTapSiswa={(id) => router.push(`/wali-kelas/${id}`)} />
+      <SiswaStatusList siswaList={siswaList} onTapSiswa={(id) => router.push(`${detailPath}/${id}`)} />
     </div>
   )
 }
