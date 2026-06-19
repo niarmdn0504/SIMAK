@@ -113,14 +113,32 @@ export function useToggleMutabaah() {
 
       const previous = queryClient.getQueryData<MutabaahDayData>(queryKey)
 
-      // Update optimistically
+      // Update optimistically — handle both flat and hierarchical
       queryClient.setQueryData<MutabaahDayData>(queryKey, (old) => {
         if (!old) return old
-        const updatedItems = old.items.map((item) =>
-          item.id === itemId ? { ...item, is_checked: isChecked } : item
-        )
-        const checked    = updatedItems.filter(i => i.is_checked).length
-        const percentage = Math.round((checked / updatedItems.length) * 100)
+
+        const updatedItems = old.items.map((item) => {
+          // Update parent if matches
+          if (item.id === itemId) {
+            return { ...item, is_checked: isChecked }
+          }
+          // Update child if matches
+          if (item.children) {
+            const updatedChildren = item.children.map(c =>
+              c.id === itemId ? { ...c, is_checked: isChecked } : c
+            )
+            return { ...item, children: updatedChildren }
+          }
+          return item
+        })
+
+        // Recalculate percentage from all items (including children)
+        const allItems = updatedItems.flatMap(p => [p, ...(p.children ?? [])])
+        const checked    = allItems.filter(i => i.is_checked).length
+        const percentage = allItems.length > 0
+          ? Math.round((checked / allItems.length) * 100)
+          : 0
+
         return { ...old, items: updatedItems, percentage }
       })
 

@@ -72,11 +72,15 @@ export function ParentShell({
             )}
           </div>
           <div className="flex items-center gap-3">
-            <div className="text-right">
-              <p className="text-xs text-primary-200">Anak</p>
-              <p className="text-sm font-semibold leading-tight line-clamp-1 max-w-32">
-                {siswaName}
-              </p>
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-lg">👦</span>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-bold leading-tight line-clamp-1 max-w-32">
+                  {siswaName}
+                </p>
+              </div>
             </div>
             <button
               onClick={handleLogout}

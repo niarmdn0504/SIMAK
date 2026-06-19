@@ -32,6 +32,8 @@ export interface MutabaahItemWithStatus {
   urutan:     number
   is_checked: boolean
   is_locked:  boolean
+  parent_id:  string | null
+  children?:  MutabaahItemWithStatus[]
 }
 
 export interface MutabaahDayData {

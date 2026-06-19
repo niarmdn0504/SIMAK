@@ -115,14 +115,27 @@ export async function GET(request: NextRequest) {
       } satisfies MutabaahDayData)
     }
 
-    const { data: items, error: itemsError } = await supabase
+    // Fetch items — handle parent_id column missing gracefully
+    let items: Array<{ id: string; nama_item: string; urutan: number; parent_id: string | null }> = []
+    const { data: itemsData, error: itemsError } = await supabase
       .from('mutabaah_item')
-      .select('id, nama_item, urutan')
+      .select('id, nama_item, urutan, parent_id')
       .eq('tahun_ajaran_id', tahunAjaran.id)
       .eq('is_active', true)
       .order('urutan', { ascending: true })
 
-    if (itemsError) throw itemsError
+    if (itemsError && itemsError.message?.includes('parent_id')) {
+      const { data: fallbackItems } = await supabase
+        .from('mutabaah_item')
+        .select('id, nama_item, urutan')
+        .eq('tahun_ajaran_id', tahunAjaran.id)
+        .eq('is_active', true)
+        .order('urutan', { ascending: true })
+      items = (fallbackItems ?? []).map(i => ({ ...i, parent_id: null }))
+    } else {
+      if (itemsError) throw itemsError
+      items = itemsData ?? []
+    }
 
     // Ambil log untuk hari ini
     const { data: logs } = await supabase
@@ -136,12 +149,13 @@ export async function GET(request: NextRequest) {
 
     const logMap = new Map(logs?.map(l => [l.item_id, l]) ?? [])
 
-    const itemsWithStatus = (items ?? []).map(item => ({
+    const itemsWithStatus = items.map(item => ({
       id:         item.id,
       nama_item:  item.nama_item,
       urutan:     item.urutan,
       is_checked: logMap.get(item.id)?.is_checked ?? false,
       is_locked:  isLocked,
+      parent_id:  item.parent_id,
     }))
 
     const checked    = itemsWithStatus.filter(i => i.is_checked).length

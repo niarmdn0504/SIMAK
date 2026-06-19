@@ -7,7 +7,7 @@ import { getParentSession }  from '@/lib/auth/parent'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getTodayWIB, getLockedAfter, formatTanggal } from '@/lib/utils/date'
 import { DashboardClient }   from './DashboardClient'
-import type { MutabaahDayData } from '@/lib/types/app'
+import type { MutabaahDayData, MutabaahItemWithStatus } from '@/lib/types/app'
 import { redirect }          from 'next/navigation'
 
 export default async function DashboardPage() {
@@ -32,13 +32,28 @@ export default async function DashboardPage() {
   }
 
   if (tahunAjaran) {
-    // Fetch item mutabaah aktif
-    const { data: items } = await supabase
+    // Fetch item mutabaah aktif dengan parent_id
+    // Fallback: jika parent_id belum ada di DB, query tetap jalan
+    let items: Array<{ id: string; nama_item: string; urutan: number; parent_id: string | null }> = []
+    const { data: itemsData, error: itemsError } = await supabase
       .from('mutabaah_item')
-      .select('id, nama_item, urutan')
+      .select('id, nama_item, urutan, parent_id')
       .eq('tahun_ajaran_id', tahunAjaran.id)
       .eq('is_active', true)
       .order('urutan', { ascending: true })
+
+    if (itemsError && itemsError.message?.includes('parent_id')) {
+      // Fallback: tanpa parent_id
+      const { data: fallbackItems } = await supabase
+        .from('mutabaah_item')
+        .select('id, nama_item, urutan')
+        .eq('tahun_ajaran_id', tahunAjaran.id)
+        .eq('is_active', true)
+        .order('urutan', { ascending: true })
+      items = (fallbackItems ?? []).map(i => ({ ...i, parent_id: null }))
+    } else {
+      items = itemsData ?? []
+    }
 
     // Fetch log hari ini
     const { data: logs } = await supabase
@@ -51,22 +66,40 @@ export default async function DashboardPage() {
     const isLocked    = new Date() > new Date(lockedAfter)
     const logMap      = new Map(logs?.map(l => [l.item_id, l.is_checked]) ?? [])
 
-    const itemsWithStatus = (items ?? []).map(item => ({
+    const allItems: MutabaahItemWithStatus[] = items.map(item => ({
       id:         item.id,
       nama_item:  item.nama_item,
       urutan:     item.urutan,
       is_checked: logMap.get(item.id) ?? false,
       is_locked:  isLocked,
+      parent_id:  item.parent_id,
     }))
 
-    const checked    = itemsWithStatus.filter(i => i.is_checked).length
-    const percentage = itemsWithStatus.length > 0
-      ? Math.round((checked / itemsWithStatus.length) * 100)
+    // Build hierarchy: parent → children
+    const parentItems = allItems.filter(i => !i.parent_id)
+    const childItems  = allItems.filter(i => i.parent_id)
+
+    // Attach children to parents
+    for (const parent of parentItems) {
+      parent.children = childItems.filter(c => c.parent_id === parent.id)
+    }
+
+    // Items without children (flat items) — treat as parent with empty children
+    const hierarchicalItems = parentItems.map(p => ({
+      ...p,
+      children: p.children ?? [],
+    }))
+
+    // Calculate percentage based on ALL items (including children)
+    const totalItems   = allItems.length
+    const checkedItems = allItems.filter(i => i.is_checked).length
+    const percentage   = totalItems > 0
+      ? Math.round((checkedItems / totalItems) * 100)
       : 0
 
     initialMutabaah = {
       tanggal,
-      items:      itemsWithStatus,
+      items:      hierarchicalItems,
       percentage,
       is_locked:  isLocked,
     }
@@ -90,9 +123,28 @@ export default async function DashboardPage() {
     .limit(1)
     .single()
 
+  // Fetch kelas siswa
+  const { data: tahunAktif } = await supabase
+    .from('tahun_ajaran')
+    .select('id')
+    .eq('is_active', true)
+    .single()
+
+  let namaKelas = ''
+  if (tahunAktif) {
+    const { data: kelasData } = await supabase
+      .from('siswa_kelas')
+      .select('kelas:kelas_id(nama_kelas)')
+      .eq('siswa_id', session.siswaId)
+      .eq('tahun_ajaran_id', tahunAktif.id)
+      .single()
+    namaKelas = (kelasData?.kelas as any)?.nama_kelas ?? ''
+  }
+
   return (
     <DashboardClient
       siswaName={session.siswaName}
+      namaKelas={namaKelas}
       tanggalLabel={formatTanggal(tanggal)}
       initialMutabaah={initialMutabaah}
       tahfizLast={tahfizLast ?? null}
