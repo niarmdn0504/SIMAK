@@ -117,8 +117,14 @@ export function SiswaList({ detailPath }: SiswaListProps) {
       {filtered.length === 0 ? (
         <div className="flex-1 flex items-center justify-center p-8">
           <div className="text-center">
-            <p className="text-3xl mb-2">🔍</p>
-            <p className="text-sm text-neutral-500 font-medium">Tidak ada siswa ditemukan</p>
+            <div className="w-16 h-16 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-3">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </div>
+            <p className="text-sm font-semibold text-neutral-600">Tidak ada siswa ditemukan</p>
+            <p className="text-xs text-neutral-400 mt-1">Coba kata kunci lain</p>
           </div>
         </div>
       ) : (

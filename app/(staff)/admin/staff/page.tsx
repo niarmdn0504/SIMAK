@@ -117,9 +117,17 @@ export default function AdminStaffPage() {
         {isLoading ? (
           Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-16 bg-neutral-200 rounded-lg animate-skeleton" />)
         ) : staffList.length === 0 ? (
-          <div className="card text-center py-10">
-            <p className="text-3xl mb-2">👥</p>
-            <p className="text-sm text-neutral-500">Belum ada akun staff</p>
+          <div className="bg-white rounded-xl shadow-card border border-neutral-100 text-center py-12">
+            <div className="w-16 h-16 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-3">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <line x1="19" y1="8" x2="19" y2="14" />
+                <line x1="22" y1="11" x2="16" y2="11" />
+              </svg>
+            </div>
+            <p className="text-sm font-semibold text-neutral-600">Belum ada akun guru</p>
+            <p className="text-xs text-neutral-400 mt-1">Buat akun guru untuk memulai</p>
           </div>
         ) : (
           staffList.map((staff, i) => (

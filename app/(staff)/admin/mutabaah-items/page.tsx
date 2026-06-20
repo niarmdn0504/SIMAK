@@ -123,7 +123,10 @@ export default function AdminMutabaahItemsPage() {
         ) : groupedItems.length === 0 ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-neutral-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <span className="text-3xl">📋</span>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 11l3 3L22 4" />
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+              </svg>
             </div>
             <p className="text-sm font-semibold text-neutral-600">Belum ada item mutabaah</p>
             <p className="text-xs text-neutral-400 mt-1">Tambah item untuk memulai tracking ibadah</p>
