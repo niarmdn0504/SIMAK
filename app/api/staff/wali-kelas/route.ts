@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireStaffSession }       from '@/lib/auth/staff'
-import { createServerClient }        from '@/lib/supabase/server'
+import { createServerClient, createServiceClient } from '@/lib/supabase/server'
 import { getTodayWIB }               from '@/lib/utils/date'
 
 export async function GET(request: NextRequest) {
@@ -15,17 +15,27 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const tanggal  = searchParams.get('tanggal') ?? getTodayWIB()
 
-    // Ambil tahun ajaran aktif
-    const { data: tahunAjaran } = await supabase
+    // Ambil tahun ajaran aktif — fallback pake service_client kalo RLS block
+    let { data: tahunAjaran } = await supabase
       .from('tahun_ajaran')
       .select('id')
       .eq('is_active', true)
       .single()
 
     if (!tahunAjaran) {
+      const svc = createServiceClient()
+      const { data: ta2 } = await svc
+        .from('tahun_ajaran')
+        .select('id')
+        .eq('is_active', true)
+        .single()
+      tahunAjaran = ta2
+    }
+
+    if (!tahunAjaran) {
       return NextResponse.json({
         siswaList: [], stats: null,
-        _debug: { error: 'tahun_ajaran not found / is_active=false', sessionUserId: session.userId, email: session.email },
+        _debug: { error: 'tahun_ajaran not found even via service role', sessionUserId: session.userId, email: session.email },
       })
     }
 
