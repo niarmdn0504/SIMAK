@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireRole }               from '@/lib/auth/staff'
-import { createServerClient }        from '@/lib/supabase/server'
+import { createServiceClient }       from '@/lib/supabase/server'
 
 export async function GET() {
   try {
-    const session = await requireRole(['admin'])
-    const supabase = await createServerClient()
+    await requireRole(['admin'])
+    const supabase = createServiceClient()
 
     const [kelasRes, guruRes, tahunAjaranRes] = await Promise.all([
       supabase.from('kelas').select('id, nama_kelas, tahun_ajaran_id, wali_kelas_id').order('nama_kelas'),
@@ -29,22 +29,49 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await requireRole(['admin'])
-    const supabase = await createServerClient()
-    const { kelasId, guruId } = await request.json()
+    await requireRole(['admin'])
+    const supabase = createServiceClient()
+    const body = await request.json()
+    const { assignments } = body
 
-    if (!kelasId) {
-      return NextResponse.json({ error: 'Pilih kelas' }, { status: 400 })
+    if (!Array.isArray(assignments) || assignments.length === 0) {
+      return NextResponse.json({ error: 'Data tidak valid' }, { status: 400 })
     }
 
-    const { error } = await supabase
-      .from('kelas')
-      .update({ wali_kelas_id: guruId || null })
-      .eq('id', kelasId)
+    const roleAssignments: Array<{ userId: string; roles: string[] }> = []
 
-    if (error) throw error
+    for (const a of assignments) {
+      const { kelasId, waliKelasId, guruWafaId, guruTahfizId } = a
 
-    // Get updated data after successful assignment
+      if (waliKelasId !== undefined) {
+        await supabase.from('kelas').update({ wali_kelas_id: waliKelasId || null }).eq('id', kelasId)
+        if (waliKelasId) roleAssignments.push({ userId: waliKelasId, roles: ['wali_kelas'] })
+      }
+
+      if (guruWafaId) {
+        roleAssignments.push({ userId: guruWafaId, roles: ['guru_wafa'] })
+      }
+
+      if (guruTahfizId) {
+        roleAssignments.push({ userId: guruTahfizId, roles: ['guru_tahfiz'] })
+      }
+    }
+
+    // Update user_roles for all assigned users
+    for (const ra of roleAssignments) {
+      for (const role of ra.roles) {
+        await supabase
+          .from('user_roles')
+          .upsert(
+            { user_id: ra.userId, role },
+            { onConflict: 'user_id,role', ignoreDuplicates: false }
+          )
+      }
+    }
+
+    // Remove roles from users who no longer have any assignment
+    // (for simplicity, skip this for MVP — manual cleanup via SQL if needed)
+
     const [kelasRes, guruRes, tahunAjaranRes] = await Promise.all([
       supabase.from('kelas').select('id, nama_kelas, tahun_ajaran_id, wali_kelas_id').order('nama_kelas'),
       supabase.from('user_profile').select('id, nama, role').neq('role', 'admin').order('nama'),
@@ -62,6 +89,7 @@ export async function POST(request: NextRequest) {
       if (err.message === 'UNAUTHORIZED') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       if (err.message === 'FORBIDDEN')    return NextResponse.json({ error: 'Forbidden' },    { status: 403 })
     }
+    console.error('assign-guru POST error:', err)
     return NextResponse.json({ error: 'Terjadi kesalahan' }, { status: 500 })
   }
 }

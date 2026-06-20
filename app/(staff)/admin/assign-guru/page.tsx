@@ -18,12 +18,20 @@ interface GuruItem {
 
 interface TahunAjaranItem { id: string; nama: string }
 
+interface KelasAssignment {
+  kelasId:      string
+  waliKelasId:  string
+  guruWafaId:   string
+  guruTahfizId: string
+}
+
 export default function AssignGuruPage() {
   const [kelas,     setKelas]     = useState<KelasItem[]>([])
   const [guru,      setGuru]      = useState<GuruItem[]>([])
   const [tahunAjaran, setTahunAjaran] = useState<TahunAjaranItem[]>([])
+  const [assign, setAssign] = useState<Record<string, KelasAssignment>>({})
   const [loading,   setLoading]   = useState(true)
-  const [saving,    setSaving]    = useState<string | null>(null)
+  const [saving,    setSaving]    = useState(false)
   const { showToast, ToastComponent } = useToast()
 
   async function fetchData() {
@@ -33,65 +41,132 @@ export default function AssignGuruPage() {
     setKelas(data.kelas ?? [])
     setGuru(data.guru ?? [])
     setTahunAjaran(data.tahunAjaran ?? [])
+    // Init assignments
+    const init: Record<string, KelasAssignment> = {}
+    for (const k of (data.kelas ?? [])) {
+      init[k.id] = { kelasId: k.id, waliKelasId: k.wali_kelas_id ?? '', guruWafaId: '', guruTahfizId: '' }
+    }
+    setAssign(init)
     setLoading(false)
   }
 
   useEffect(() => { fetchData() }, [])
 
-  async function handleAssign(kelasId: string, guruId: string) {
-    setSaving(kelasId)
+  function update(kelasId: string, field: keyof KelasAssignment, value: string) {
+    setAssign(prev => ({
+      ...prev,
+      [kelasId]: { ...prev[kelasId], [field]: value },
+    }))
+  }
+
+  async function handleSave() {
+    setSaving(true)
+    const assignments = Object.values(assign).filter(a => a.waliKelasId || a.guruWafaId || a.guruTahfizId)
+    if (assignments.length === 0) {
+      showToast('Tidak ada perubahan', 'info')
+      setSaving(false)
+      return
+    }
+
     const res = await fetch('/api/admin/assign-guru', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ kelasId, guruId: guruId || null }),
+      body: JSON.stringify({ assignments }),
     })
+
     if (res.ok) {
       const data = await res.json()
-      // Update state immediately without refetching
       if (data.kelas) setKelas(data.kelas)
-      if (data.guru) setGuru(data.guru)
-      if (data.tahunAjaran) setTahunAjaran(data.tahunAjaran)
       showToast('Guru berhasil ditugaskan', 'success')
+      // Re-init
+      const init: Record<string, KelasAssignment> = {}
+      for (const k of (data.kelas ?? [])) {
+        init[k.id] = { kelasId: k.id, waliKelasId: k.wali_kelas_id ?? '', guruWafaId: '', guruTahfizId: '' }
+      }
+      setAssign(init)
     } else {
       showToast('Gagal menyimpan', 'error')
     }
-    setSaving(null)
+    setSaving(false)
   }
 
   if (loading) return <div className="p-6 text-sm text-neutral-400">Memuat...</div>
 
-  return (
-    <div className="p-4 md:p-6 max-w-3xl mx-auto">
-      <h1 className="text-xl font-bold text-neutral-800 mb-1">Assign Guru ke Kelas</h1>
-      <p className="text-xs text-neutral-400 mb-6">Pilih guru untuk setiap kelas</p>
+  const hasChanges = Object.values(assign).some(a => a.waliKelasId || a.guruWafaId || a.guruTahfizId)
 
-      <div className="space-y-2">
-        {kelas.map(k => (
-          <div key={k.id} className="card flex items-center gap-4 p-4">
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm text-neutral-800">{k.nama_kelas}</p>
-              <p className="text-[11px] text-neutral-400">
-                Tahun Ajaran: {tahunAjaran.find(ta => ta.id === k.tahun_ajaran_id)?.nama}
+  return (
+    <div className="p-4 md:p-6 max-w-4xl mx-auto">
+      <h1 className="text-xl font-bold text-neutral-800 mb-1">Assign Guru ke Kelas</h1>
+      <p className="text-xs text-neutral-400 mb-6">Pilih guru untuk setiap peran di setiap kelas</p>
+
+      <div className="space-y-3">
+        {kelas.map(k => {
+          const a = assign[k.id]
+          if (!a) return null
+
+          return (
+            <div key={k.id} className="card p-4 space-y-3">
+              <p className="font-bold text-sm text-neutral-800 border-b border-neutral-100 pb-2">
+                Kelas {k.nama_kelas}
               </p>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-600 mb-1">Wali Kelas</label>
+                  <select
+                    className="input text-sm w-full"
+                    value={a.waliKelasId}
+                    onChange={e => update(k.id, 'waliKelasId', e.target.value)}
+                  >
+                    <option value="">— Kosong —</option>
+                    {guru.map(g => <option key={g.id} value={g.id}>{g.nama}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-600 mb-1">Guru Wafa</label>
+                  <select
+                    className="input text-sm w-full"
+                    value={a.guruWafaId}
+                    onChange={e => update(k.id, 'guruWafaId', e.target.value)}
+                  >
+                    <option value="">— Kosong —</option>
+                    {guru.map(g => <option key={g.id} value={g.id}>{g.nama}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-600 mb-1">Guru Tahfiz</label>
+                  <select
+                    className="input text-sm w-full"
+                    value={a.guruTahfizId}
+                    onChange={e => update(k.id, 'guruTahfizId', e.target.value)}
+                  >
+                    <option value="">— Kosong —</option>
+                    {guru.map(g => <option key={g.id} value={g.id}>{g.nama}</option>)}
+                  </select>
+                </div>
+              </div>
             </div>
-            <select
-              className="input text-sm max-w-48"
-              value={k.wali_kelas_id ?? ''}
-              onChange={e => handleAssign(k.id, e.target.value)}
-              disabled={saving === k.id}
-            >
-              <option value="">— Kosong —</option>
-              {guru.map(g => (
-                <option key={g.id} value={g.id}>{g.nama}</option>
-              ))}
-            </select>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       {kelas.length === 0 && (
         <div className="card text-center py-10">
           <p className="text-neutral-500 text-sm">Belum ada kelas</p>
+        </div>
+      )}
+
+      {hasChanges && (
+        <div className="mt-6">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full h-12 bg-primary-500 hover:bg-primary-600 text-white font-semibold rounded-xl transition-all disabled:opacity-50"
+          >
+            {saving ? 'Menyimpan...' : 'Simpan Semua Perubahan'}
+          </button>
         </div>
       )}
 
