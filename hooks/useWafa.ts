@@ -15,7 +15,7 @@ export interface WafaEntry {
   status:     'naik' | 'lanjut' | 'mengulang'
   catatan:    string | null
   created_at: string
-  guru?:      { nama: string } | null
+  guru_id:    string
 }
 
 export interface WafaInput {

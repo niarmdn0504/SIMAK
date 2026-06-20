@@ -22,11 +22,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabase
       .from('wafa_log')
-      .select(`
-        id, tanggal, jilid, halaman,
-        status, catatan, created_at,
-        guru:guru_id ( nama )
-      `)
+      .select('id, tanggal, jilid, halaman, status, catatan, created_at, guru_id')
       .eq('siswa_id', siswaId)
       .order('tanggal', { ascending: false })
       .order('created_at', { ascending: false })

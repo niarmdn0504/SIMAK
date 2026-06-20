@@ -16,7 +16,7 @@ export interface TahfizEntry {
   status:     'setoran_baru' | 'murajaah' | 'lulus'
   catatan:    string | null
   created_at: string
-  guru?:      { nama: string } | null
+  guru_id:    string
 }
 
 export interface TahfizInput {

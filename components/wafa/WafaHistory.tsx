@@ -90,8 +90,8 @@ export function WafaHistory({ entries, siswaId, isLoading }: WafaHistoryProps) {
                       <span className="text-xs text-neutral-400">
                         {new Date(entry.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
-                      {(entry.guru as any)?.nama && (
-                        <span className="text-xs text-neutral-400">· {(entry.guru as any).nama}</span>
+                      {entry.guru_id && (
+                        <span className="text-xs text-neutral-400">· Guru</span>
                       )}
                     </div>
                   </div>

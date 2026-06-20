@@ -66,7 +66,6 @@ export function TahfizHistory({ entries, siswaId, isLoading, guruId }: TahfizHis
       <div className="space-y-3">
         {entries.map((entry, i) => {
           const statusInfo = STATUS_MAP[entry.status]
-          const canDelete  = !guruId || (entry.guru as any)?.nama !== undefined
 
           return (
             <div
@@ -128,9 +127,9 @@ export function TahfizHistory({ entries, siswaId, isLoading, guruId }: TahfizHis
                           day: 'numeric', month: 'short', year: 'numeric'
                         })}
                       </span>
-                      {(entry.guru as any)?.nama && (
+                      {entry.guru_id && (
                         <span className="text-xs text-neutral-400">
-                          · {(entry.guru as any).nama}
+                          · Guru
                         </span>
                       )}
                     </div>

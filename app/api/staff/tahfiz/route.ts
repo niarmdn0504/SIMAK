@@ -21,11 +21,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabase
       .from('tahfiz_log')
-      .select(`
-        id, tanggal, surah, ayat_awal, ayat_akhir,
-        status, catatan, created_at,
-        guru:guru_id ( nama )
-      `)
+      .select('id, tanggal, surah, ayat_awal, ayat_akhir, status, catatan, created_at, guru_id')
       .eq('siswa_id', siswaId)
       .order('tanggal', { ascending: false })
       .order('created_at', { ascending: false })
