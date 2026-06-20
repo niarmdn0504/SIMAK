@@ -7,11 +7,11 @@ import { createClient }                        from '@/lib/supabase/client'
 import { cn }                                  from '@/lib/utils/cn'
 
 const MENU_ITEMS = [
-  { href: '/guru',             label: 'Dashboard',         icon: <IconDashboard /> },
-  { href: '/guru/kelas',       label: 'Kelas / Mutabaah',  icon: <IconWaliKelas /> },
-  { href: '/guru/wafa',        label: 'Wafa',              icon: <IconWafa /> },
-  { href: '/guru/tahfiz',      label: 'Tahfizh',           icon: <IconTahfiz /> },
+  { href: '/guru',             label: 'Dashboard',            icon: <IconDashboard /> },
+  { href: '/guru/kelas',       label: 'Kelas / Mutabaah',     icon: <IconWaliKelas /> },
   { href: '/guru/atur-mutabaah', label: 'Atur Item Mutabaah', icon: <IconAturMutabaah /> },
+  { href: '/guru/wafa',        label: 'Wafa',                 icon: <IconWafa /> },
+  { href: '/guru/tahfiz',      label: 'Tahfizh',              icon: <IconTahfiz /> },
 ] as const
 
 export function GuruShell({

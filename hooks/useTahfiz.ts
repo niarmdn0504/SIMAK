@@ -41,7 +41,8 @@ export function useTahfizBySiswa(siswaId: string | null) {
       return res.json()
     },
     enabled:   !!siswaId,
-    staleTime: 2 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: true,
   })
 }
 
