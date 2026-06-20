@@ -28,18 +28,41 @@ interface MenuItem {
   roles?:  StaffRole[]
 }
 
-const MENU_ITEMS: MenuItem[] = [
-  { href: '/admin',              label: 'Dashboard',      icon: <IconDashboard />,  roles: ['admin'] },
-  { href: '/admin/siswa',        label: 'Kelola Siswa',   icon: <IconSiswa />,      roles: ['admin'] },
-  { href: '/admin/tahun-ajaran', label: 'Tahun Ajaran',   icon: <IconTahun />,      roles: ['admin'] },
-  { href: '/admin/mutabaah-items', label: 'Item Mutabaah', icon: <IconMutabaah />, roles: ['admin'] },
-  { href: '/admin/staff',        label: 'Kelola Guru',    icon: <IconStaff />,      roles: ['admin'] },
-  { href: '/admin/export',       label: 'Export Data',    icon: <IconExport />,     roles: ['admin'] },
-  { href: '/admin/kenaikan-kelas', label: 'Kenaikan Kelas', icon: <IconKenaikan />, roles: ['admin'] },
-  { href: '/admin/assign-guru',   label: 'Assign Guru',    icon: <IconWaliKelas />, roles: ['admin'] },
-  { href: '/tahfiz',             label: 'Tahfiz',         icon: <IconTahfiz />,     roles: ['guru_tahfiz'] },
-  { href: '/wafa',               label: 'Wafa',           icon: <IconWafa />,       roles: ['guru_wafa'] },
-  { href: '/wali-kelas',         label: 'Wali Kelas',     icon: <IconWaliKelas />,  roles: ['wali_kelas'] },
+interface MenuGroup {
+  title:   string
+  items:   MenuItem[]
+  roles?:  StaffRole[]
+}
+
+const MENU_GROUPS: MenuGroup[] = [
+  {
+    title: 'Data Master',
+    roles: ['admin'],
+    items: [
+      { href: '/admin',              label: 'Dashboard',    icon: <IconDashboard /> },
+      { href: '/admin/tahun-ajaran', label: 'Tahun Ajaran', icon: <IconTahun /> },
+      { href: '/admin/siswa',        label: 'Siswa',        icon: <IconSiswa /> },
+      { href: '/admin/staff',        label: 'Guru',         icon: <IconStaff /> },
+    ],
+  },
+  {
+    title: 'Akademik',
+    items: [
+      { href: '/admin/mutabaah-items', label: 'Mutabaah',   icon: <IconMutabaah />, roles: ['admin'] },
+      { href: '/tahfiz',               label: 'Tahfizh',    icon: <IconTahfiz />,   roles: ['guru_tahfiz'] },
+      { href: '/wafa',                 label: 'Wafa',        icon: <IconWafa />,     roles: ['guru_wafa'] },
+      { href: '/wali-kelas',           label: 'Wali Kelas',  icon: <IconWaliKelas />, roles: ['wali_kelas'] },
+    ],
+  },
+  {
+    title: 'Pengaturan',
+    roles: ['admin'],
+    items: [
+      { href: '/admin/assign-guru',     label: 'Penugasan Guru', icon: <IconAssign /> },
+      { href: '/admin/kenaikan-kelas',  label: 'Kenaikan Kelas', icon: <IconKenaikan /> },
+      { href: '/admin/export',          label: 'Export Data',    icon: <IconExport /> },
+    ],
+  },
 ]
 
 export function StaffShell({
@@ -55,8 +78,6 @@ export function StaffShell({
   const router   = useRouter()
   const pathname = usePathname()
 
-  const filteredMenu = MENU_ITEMS.filter(item => !item.roles || item.roles.includes(role))
-
   const parentPath = pathname.split('/').filter(Boolean).length > 1
     ? pathname.substring(0, pathname.lastIndexOf('/')) || '/'
     : null
@@ -70,14 +91,13 @@ export function StaffShell({
   }
 
   return (
-    <div className="min-h-screen bg-neutral-100 flex">
+    <div className="min-h-screen bg-neutral-50 flex">
       {/* ── Desktop Sidebar ── */}
       <aside className="hidden md:flex md:flex-col md:w-64 md:fixed md:inset-y-0 bg-primary-800 text-white z-50">
         <SidebarContent
           nama={nama}
           role={role}
           pathname={pathname}
-          filteredMenu={filteredMenu}
           onLogout={handleLogout}
         />
       </aside>
@@ -94,7 +114,6 @@ export function StaffShell({
               nama={nama}
               role={role}
               pathname={pathname}
-              filteredMenu={filteredMenu}
               onLogout={() => { setSidebarOpen(false); handleLogout() }}
               onClose={() => setSidebarOpen(false)}
             />
@@ -157,14 +176,12 @@ function SidebarContent({
   nama,
   role,
   pathname,
-  filteredMenu,
   onLogout,
   onClose,
 }: {
   nama:          string
   role:          StaffRole
   pathname:      string
-  filteredMenu:  MenuItem[]
   onLogout:      () => void
   onClose?:      () => void
 }) {
@@ -177,7 +194,7 @@ function SidebarContent({
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-display font-bold text-lg leading-tight">SIMAK</p>
-          <p className="text-primary-300 text-[10px] leading-tight">SDIT Al-Kautsar Mukomuko</p>
+          <p className="text-primary-300 text-[10px] leading-tight">SDIT Al-Kautsar Mukumuko</p>
         </div>
         {onClose && (
           <button
@@ -199,29 +216,44 @@ function SidebarContent({
         </span>
       </div>
 
-      {/* Menu */}
-      <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
-        {filteredMenu.map((item) => {
-          const isActive = pathname === item.href ||
-            (item.href !== '/admin' && item.href !== '/tahfiz' && item.href !== '/wafa' && item.href !== '/wali-kelas' && pathname.startsWith(item.href))
+      {/* Menu Groups */}
+      <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-4">
+        {MENU_GROUPS.map((group) => {
+          const visibleItems = group.items.filter(item => !item.roles || item.roles.includes(role))
+          if (visibleItems.length === 0) return null
+          if (group.roles && !group.roles.includes(role)) return null
+
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onClose}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all relative',
-                isActive
-                  ? 'bg-white/20 text-white shadow-sm'
-                  : 'text-primary-200 hover:bg-white/10 hover:text-white'
-              )}
-            >
-              {isActive && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-white rounded-r-full" />
-              )}
-              <span className="w-5 h-5 flex items-center justify-center flex-shrink-0">{item.icon}</span>
-              <span className="truncate">{item.label}</span>
-            </Link>
+            <div key={group.title}>
+              <p className="px-3 text-[10px] font-bold text-primary-400 uppercase tracking-widest mb-1.5">
+                {group.title}
+              </p>
+              <div className="space-y-0.5">
+                {visibleItems.map((item) => {
+                  const isActive = pathname === item.href ||
+                    (item.href !== '/admin' && item.href !== '/tahfiz' && item.href !== '/wafa' && item.href !== '/wali-kelas' && pathname.startsWith(item.href))
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={onClose}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all relative',
+                        isActive
+                          ? 'bg-white/20 text-white shadow-sm'
+                          : 'text-primary-200 hover:bg-white/10 hover:text-white'
+                      )}
+                    >
+                      {isActive && (
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-white rounded-r-full" />
+                      )}
+                      <span className="w-5 h-5 flex items-center justify-center flex-shrink-0">{item.icon}</span>
+                      <span className="truncate">{item.label}</span>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
           )
         })}
       </nav>
@@ -271,14 +303,6 @@ function IconSiswa() {
       <circle cx="9" cy="7" r="4" />
       <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  )
-}
-function IconKelas() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
     </svg>
   )
 }
@@ -348,6 +372,16 @@ function IconWaliKelas() {
       <rect x="2" y="3" width="20" height="14" rx="2" />
       <line x1="8" y1="21" x2="16" y2="21" />
       <line x1="12" y1="17" x2="12" y2="21" />
+    </svg>
+  )
+}
+function IconAssign() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="8.5" cy="7" r="4" />
+      <line x1="20" y1="8" x2="20" y2="14" />
+      <line x1="23" y1="11" x2="17" y2="11" />
     </svg>
   )
 }

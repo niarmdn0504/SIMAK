@@ -131,7 +131,7 @@ export function LoginForm() {
             Monitoring Akhlak & Karakter
           </p>
           <p className="text-primary-200 text-xs mt-1 font-body leading-relaxed max-w-xs mx-auto">
-            Aplikasi Monitoring Akhlak dan Karakter<br />SDIT Al-Kautsar Mukomuko
+            Aplikasi Monitoring Akhlak dan Karakter<br />SDIT Al-Kautsar Mukumuko
           </p>
         </div>
 
@@ -316,7 +316,7 @@ export function LoginForm() {
       {/* Footer */}
       <div className="text-center pb-6 px-6 animate-in" style={{ animationDelay: '0.25s' }}>
         <p className="text-primary-300 text-[11px]">Versi 1.0.0</p>
-        <p className="text-primary-200 text-[11px] mt-0.5">&copy; SDIT Al-Kautsar Mukomuko</p>
+        <p className="text-primary-200 text-[11px] mt-0.5">&copy; SDIT Al-Kautsar Mukumuko</p>
       </div>
     </div>
   )

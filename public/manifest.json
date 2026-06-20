@@ -1,7 +1,7 @@
 {
-  "name": "SIMAK — Monitoring Akhlak & Karakter SDIT Al-Kautsar Mukomuko",
+  "name": "SIMAK — Monitoring Akhlak & Karakter SDIT Al-Kautsar Mukumuko",
   "short_name": "SIMAK",
-  "description": "Aplikasi Monitoring Akhlak dan Karakter SDIT Al-Kautsar Mukomuko",
+  "description": "Aplikasi Monitoring Akhlak dan Karakter SDIT Al-Kautsar Mukumuko",
   "start_url": "/login",
   "display": "standalone",
   "background_color": "#166534",

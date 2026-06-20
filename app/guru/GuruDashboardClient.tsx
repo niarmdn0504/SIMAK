@@ -3,16 +3,16 @@
 import Link from 'next/link'
 
 interface Stats {
-  totalSiswa:   number
-  totalKelas:   number
-  tahunAktif:   string
+  totalSiswa:    number
+  totalKelas:    number
+  tahunAktif:    string
   mutabaahToday: number
 }
 
 interface MenuCard {
   href:     string
   label:    string
-  icon:     string
+  icon:     React.ReactNode
   color:    string
 }
 
@@ -20,20 +20,36 @@ const MENU_CARDS: MenuCard[] = [
   {
     href: '/guru/kelas',
     label: 'Kelas / Mutabaah',
-    icon: '🏫',
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
     color: 'from-blue-500 to-blue-600',
   },
   {
     href: '/guru/wafa',
     label: 'Wafa',
-    icon: '📚',
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+      </svg>
+    ),
     color: 'from-amber-500 to-amber-600',
   },
   {
     href: '/guru/tahfiz',
     label: 'Tahfizh',
-    icon: '📖',
-    color: 'from-green-500 to-green-600',
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+      </svg>
+    ),
+    color: 'from-emerald-500 to-emerald-600',
   },
 ]
 
@@ -79,15 +95,15 @@ export function GuruDashboardClient({
 
       {/* Menu cards */}
       <div>
-        <h2 className="text-sm font-semibold text-neutral-600 mb-3">Menu</h2>
+        <h2 className="text-sm font-semibold text-neutral-500 mb-3">Menu</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {MENU_CARDS.map(card => (
             <Link
               key={card.href}
               href={card.href}
-              className={`bg-gradient-to-br ${card.color} rounded-xl p-5 text-white text-center hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]`}
+              className={`bg-gradient-to-br ${card.color} rounded-xl p-6 text-white text-center hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]`}
             >
-              <span className="text-4xl block mb-2">{card.icon}</span>
+              <div className="flex justify-center mb-3 opacity-90">{card.icon}</div>
               <p className="font-bold text-sm">{card.label}</p>
             </Link>
           ))}

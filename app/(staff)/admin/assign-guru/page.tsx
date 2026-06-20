@@ -13,7 +13,6 @@ interface KelasItem {
 interface GuruItem {
   id: string
   nama: string
-  role: string
 }
 
 interface TahunAjaranItem { id: string; nama: string }
@@ -41,7 +40,6 @@ export default function AssignGuruPage() {
     setKelas(data.kelas ?? [])
     setGuru(data.guru ?? [])
     setTahunAjaran(data.tahunAjaran ?? [])
-    // Init assignments
     const init: Record<string, KelasAssignment> = {}
     for (const k of (data.kelas ?? [])) {
       init[k.id] = { kelasId: k.id, waliKelasId: k.wali_kelas_id ?? '', guruWafaId: '', guruTahfizId: '' }
@@ -77,8 +75,7 @@ export default function AssignGuruPage() {
     if (res.ok) {
       const data = await res.json()
       if (data.kelas) setKelas(data.kelas)
-      showToast('Guru berhasil ditugaskan', 'success')
-      // Re-init
+      showToast('Penugasan guru berhasil disimpan', 'success')
       const init: Record<string, KelasAssignment> = {}
       for (const k of (data.kelas ?? [])) {
         init[k.id] = { kelasId: k.id, waliKelasId: k.wali_kelas_id ?? '', guruWafaId: '', guruTahfizId: '' }
@@ -95,54 +92,87 @@ export default function AssignGuruPage() {
   const hasChanges = Object.values(assign).some(a => a.waliKelasId || a.guruWafaId || a.guruTahfizId)
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto">
-      <h1 className="text-xl font-bold text-neutral-800 mb-1">Assign Guru ke Kelas</h1>
-      <p className="text-xs text-neutral-400 mb-6">Pilih guru untuk setiap peran di setiap kelas</p>
+    <div className="p-4 md:p-6 max-w-3xl mx-auto">
+      <h1 className="text-xl font-bold text-neutral-800 mb-1">Penugasan Guru</h1>
+      <p className="text-xs text-neutral-400 mb-6">Tentukan guru yang bertanggung jawab untuk tiap kelas</p>
 
       <div className="space-y-3">
         {kelas.map(k => {
           const a = assign[k.id]
           if (!a) return null
+          const ta = tahunAjaran.find(t => t.id === k.tahun_ajaran_id)
 
           return (
-            <div key={k.id} className="card p-4 space-y-3">
-              <p className="font-bold text-sm text-neutral-800 border-b border-neutral-100 pb-2">
-                Kelas {k.nama_kelas}
-              </p>
-
-              <div className="grid grid-cols-3 gap-3">
+            <div key={k.id} className="bg-white rounded-xl shadow-card border border-neutral-100 p-5 space-y-4">
+              {/* Header kelas */}
+              <div className="flex items-center gap-3 border-b border-neutral-100 pb-3">
+                <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2D7A4F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                  </svg>
+                </div>
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-600 mb-1">Wali Kelas</label>
+                  <p className="font-bold text-neutral-800">Kelas {k.nama_kelas}</p>
+                  <p className="text-[11px] text-neutral-400">{ta?.nama ?? '-'}</p>
+                </div>
+              </div>
+
+              {/* Penugasan */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {/* Wali Kelas */}
+                <div>
+                  <label className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 mb-1.5">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="3" width="20" height="14" rx="2" />
+                      <line x1="8" y1="21" x2="16" y2="21" />
+                      <line x1="12" y1="17" x2="12" y2="21" />
+                    </svg>
+                    Wali Kelas
+                  </label>
                   <select
-                    className="input text-sm w-full"
+                    className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 focus:outline-none transition-colors"
                     value={a.waliKelasId}
                     onChange={e => update(k.id, 'waliKelasId', e.target.value)}
                   >
-                    <option value="">— Kosong —</option>
+                    <option value="">-- Pilih --</option>
                     {guru.map(g => <option key={g.id} value={g.id}>{g.nama}</option>)}
                   </select>
                 </div>
 
+                {/* Guru Wafa */}
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-600 mb-1">Guru Wafa</label>
+                  <label className="flex items-center gap-1.5 text-xs font-semibold text-amber-600 mb-1.5">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                    Guru Wafa
+                  </label>
                   <select
-                    className="input text-sm w-full"
+                    className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 focus:outline-none transition-colors"
                     value={a.guruWafaId}
                     onChange={e => update(k.id, 'guruWafaId', e.target.value)}
                   >
-                    <option value="">— Kosong —</option>
+                    <option value="">-- Pilih --</option>
                     {guru.map(g => <option key={g.id} value={g.id}>{g.nama}</option>)}
                   </select>
                 </div>
 
+                {/* Guru Tahfiz */}
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-600 mb-1">Guru Tahfiz</label>
+                  <label className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 mb-1.5">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                    </svg>
+                    Guru Tahfizh
+                  </label>
                   <select
-                    className="input text-sm w-full"
+                    className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 focus:outline-none transition-colors"
                     value={a.guruTahfizId}
                     onChange={e => update(k.id, 'guruTahfizId', e.target.value)}
                   >
-                    <option value="">— Kosong —</option>
+                    <option value="">-- Pilih --</option>
                     {guru.map(g => <option key={g.id} value={g.id}>{g.nama}</option>)}
                   </select>
                 </div>
@@ -153,20 +183,39 @@ export default function AssignGuruPage() {
       </div>
 
       {kelas.length === 0 && (
-        <div className="card text-center py-10">
+        <div className="bg-white rounded-xl shadow-card border border-neutral-100 text-center py-12">
+          <div className="w-16 h-16 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-3">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+            </svg>
+          </div>
           <p className="text-neutral-500 text-sm">Belum ada kelas</p>
+          <p className="text-neutral-400 text-xs mt-1">Buat kelas terlebih dahulu di menu Kelas</p>
         </div>
       )}
 
+      {/* Simpan */}
       {hasChanges && (
-        <div className="mt-6">
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="w-full h-12 bg-primary-500 hover:bg-primary-600 text-white font-semibold rounded-xl transition-all disabled:opacity-50"
-          >
-            {saving ? 'Menyimpan...' : 'Simpan Semua Perubahan'}
-          </button>
+        <div className="mt-6 bg-white rounded-xl shadow-card border border-primary-200 p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2D7A4F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 11l3 3L22 4" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-neutral-700">Ada perubahan yang belum disimpan</p>
+              <p className="text-[11px] text-neutral-400">Klik tombol di sebelah untuk menyimpan penugasan guru</p>
+            </div>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="px-5 h-10 bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold rounded-lg transition-all disabled:opacity-50 flex-shrink-0"
+            >
+              {saving ? 'Menyimpan...' : 'Simpan'}
+            </button>
+          </div>
         </div>
       )}
 
