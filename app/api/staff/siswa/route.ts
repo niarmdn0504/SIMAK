@@ -5,12 +5,12 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireStaffSession }       from '@/lib/auth/staff'
-import { createServerClient }        from '@/lib/supabase/server'
+import { createServiceClient }       from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
   try {
     const session  = await requireStaffSession()
-    const supabase = await createServerClient()
+    const supabase = createServiceClient()
     const { searchParams } = new URL(request.url)
     const kelasId  = searchParams.get('kelasId')
 

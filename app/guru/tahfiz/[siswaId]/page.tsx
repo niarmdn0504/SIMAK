@@ -5,7 +5,7 @@
 
 import { redirect }            from 'next/navigation'
 import { getStaffSession }     from '@/lib/auth/staff'
-import { createServerClient }  from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 import { TahfizDetailClient }  from '@/components/tahfiz/TahfizDetailClient'
 
 interface Props {
@@ -15,10 +15,10 @@ interface Props {
 export default async function GuruTahfizDetailPage({ params }: Props) {
   const session = await getStaffSession()
   if (!session) redirect('/login')
-  if (!session.roles.includes('guru_tahfiz') && session.role !== 'admin') redirect('/guru')
+  if (session.role === 'admin') redirect('/admin')
 
   const { siswaId } = await params
-  const supabase    = await createServerClient()
+  const supabase    = createServiceClient()
 
   const { data: siswa } = await supabase
     .from('siswa')

@@ -6,13 +6,13 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireStaffSession }       from '@/lib/auth/staff'
-import { createServerClient }        from '@/lib/supabase/server'
+import { createServiceClient }       from '@/lib/supabase/server'
 import { WAFA_JILID }                from '@/lib/constants/wafa'
 
 export async function GET(request: NextRequest) {
   try {
     await requireStaffSession()
-    const supabase = await createServerClient()
+    const supabase = createServiceClient()
     const { searchParams } = new URL(request.url)
     const siswaId = searchParams.get('siswaId')
 
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session  = await requireStaffSession()
-    const supabase = await createServerClient()
+    const supabase = createServiceClient()
     const body     = await request.json()
 
     const { siswaId, tanggal, jilid, halaman, status, catatan } = body
