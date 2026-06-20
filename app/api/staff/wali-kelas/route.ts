@@ -32,7 +32,22 @@ export async function GET(request: NextRequest) {
       .eq('tahun_ajaran_id', tahunAjaran.id)
 
     if (!kelasList || kelasList.length === 0) {
-      return NextResponse.json({ siswaList: [], stats: null })
+      // Ketika tidak ada kelas, cek apakah wali_kelas_id di kelas
+      // memang kosong atau ada mismatch
+      const { data: allKelas } = await supabase
+        .from('kelas')
+        .select('id, nama_kelas, wali_kelas_id')
+        .eq('tahun_ajaran_id', tahunAjaran.id)
+
+      return NextResponse.json({
+        siswaList: [],
+        stats: null,
+        _debug: {
+          sessionUserId: session.userId,
+          sessionEmail:  session.email,
+          allKelas: allKelas ?? [],
+        },
+      })
     }
 
     const kelasIds = kelasList.map(k => k.id)
