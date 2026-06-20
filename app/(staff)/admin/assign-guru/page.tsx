@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useToast }            from '@/components/ui/Toast'
+import { cn }                  from '@/lib/utils/cn'
 
 interface KelasItem {
   id: string
@@ -91,10 +92,45 @@ export default function AssignGuruPage() {
 
   const hasChanges = Object.values(assign).some(a => a.waliKelasId || a.guruWafaId || a.guruTahfizId)
 
+  // Summary stats
+  const totalKelas = kelas.length
+  const totalWali  = Object.values(assign).filter(a => a.waliKelasId).length
+  const totalWafa  = Object.values(assign).filter(a => a.guruWafaId).length
+  const totalTahfiz = Object.values(assign).filter(a => a.guruTahfizId).length
+  const isLengkap  = totalWali === totalKelas && totalWafa === totalKelas && totalTahfiz === totalKelas
+
   return (
     <div className="p-4 md:p-6 max-w-3xl mx-auto">
       <h1 className="text-xl font-bold text-neutral-800 mb-1">Penugasan Guru</h1>
-      <p className="text-xs text-neutral-400 mb-6">Tentukan guru yang bertanggung jawab untuk tiap kelas</p>
+      <p className="text-xs text-neutral-400 mb-4">Tentukan guru yang bertanggung jawab untuk tiap kelas</p>
+
+      {/* Summary */}
+      <div className="bg-white rounded-xl shadow-card border border-neutral-100 p-4 mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm font-semibold text-neutral-700">Ringkasan Penugasan</p>
+          <span className={cn('text-xs font-bold px-2.5 py-1 rounded-full', isLengkap ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700')}>
+            {isLengkap ? '✅ Lengkap' : '⚠️ Belum Lengkap'}
+          </span>
+        </div>
+        <div className="grid grid-cols-4 gap-3 text-center">
+          <div>
+            <p className="text-lg font-bold text-neutral-800">{totalKelas}</p>
+            <p className="text-[11px] text-neutral-400">Total Kelas</p>
+          </div>
+          <div>
+            <p className="text-lg font-bold text-blue-600">{totalWali}</p>
+            <p className="text-[11px] text-neutral-400">Wali Kelas</p>
+          </div>
+          <div>
+            <p className="text-lg font-bold text-amber-600">{totalWafa}</p>
+            <p className="text-[11px] text-neutral-400">Guru Wafa</p>
+          </div>
+          <div>
+            <p className="text-lg font-bold text-emerald-600">{totalTahfiz}</p>
+            <p className="text-[11px] text-neutral-400">Guru Tahfiz</p>
+          </div>
+        </div>
+      </div>
 
       <div className="space-y-3">
         {kelas.map(k => {

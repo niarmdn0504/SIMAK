@@ -47,20 +47,26 @@ const MENU_GROUPS: MenuGroup[] = [
   },
   {
     title: 'Akademik',
+    roles: ['admin'],
     items: [
-      { href: '/admin/mutabaah-items', label: 'Mutabaah',   icon: <IconMutabaah />, roles: ['admin'] },
-      { href: '/tahfiz',               label: 'Tahfizh',    icon: <IconTahfiz />,   roles: ['guru_tahfiz'] },
-      { href: '/wafa',                 label: 'Wafa',        icon: <IconWafa />,     roles: ['guru_wafa'] },
-      { href: '/wali-kelas',           label: 'Wali Kelas',  icon: <IconWaliKelas />, roles: ['wali_kelas'] },
+      { href: '/admin/mutabaah-items', label: 'Bank Item Mutabaah', icon: <IconMutabaah /> },
+      { href: '/admin/assign-guru',     label: 'Penugasan Guru',    icon: <IconAssign /> },
+      { href: '/admin/kenaikan-kelas',  label: 'Kenaikan Kelas',    icon: <IconKenaikan /> },
     ],
   },
   {
-    title: 'Pengaturan',
+    title: 'Laporan',
     roles: ['admin'],
     items: [
-      { href: '/admin/assign-guru',     label: 'Penugasan Guru', icon: <IconAssign /> },
-      { href: '/admin/kenaikan-kelas',  label: 'Kenaikan Kelas', icon: <IconKenaikan /> },
-      { href: '/admin/export',          label: 'Export Data',    icon: <IconExport /> },
+      { href: '/admin/export', label: 'Export Data', icon: <IconExport /> },
+    ],
+  },
+  {
+    title: 'Akademik',
+    items: [
+      { href: '/tahfiz',     label: 'Tahfizh',   icon: <IconTahfiz />,   roles: ['guru_tahfiz'] },
+      { href: '/wafa',       label: 'Wafa',       icon: <IconWafa />,     roles: ['guru_wafa'] },
+      { href: '/wali-kelas', label: 'Wali Kelas', icon: <IconWaliKelas />, roles: ['wali_kelas'] },
     ],
   },
 ]
@@ -194,7 +200,7 @@ function SidebarContent({
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-display font-bold text-lg leading-tight">SIMAK</p>
-          <p className="text-primary-300 text-[10px] leading-tight">SDIT Al-Kautsar Mukumuko</p>
+          <p className="text-primary-300 text-[10px] leading-tight">SDIT Al-Kautsar Muko-muko</p>
         </div>
         {onClose && (
           <button

@@ -1,20 +1,15 @@
-// ============================================================
-// app/(staff)/admin/export/page.tsx
-// Export data ke Excel
-// ============================================================
-
 'use client'
 
 import { useState, useEffect } from 'react'
 import { downloadFromUrl }     from '@/lib/utils/excel'
 import { useToast }            from '@/components/ui/Toast'
 import { cn }                  from '@/lib/utils/cn'
-import { getTodayWIB }         from '@/lib/utils/date'
+import { getTodayWIB, formatTanggal } from '@/lib/utils/date'
 
 const EXPORT_TYPES = [
-  { value: 'mutabaah', label: 'Mutabaah', icon: '✅', desc: 'Data ibadah harian per siswa' },
-  { value: 'tahfiz',   label: 'Tahfiz',   icon: '📖', desc: 'Riwayat setoran hafalan' },
-  { value: 'wafa',     label: 'Wafa',     icon: '📚', desc: 'Riwayat progres Wafa' },
+  { value: 'mutabaah', label: 'Mutabaah', icon: <IconCheck />, desc: 'Data ibadah harian per siswa' },
+  { value: 'tahfiz',   label: 'Tahfiz',   icon: <IconBook />, desc: 'Riwayat setoran hafalan' },
+  { value: 'wafa',     label: 'Wafa',     icon: <IconStar />, desc: 'Riwayat progres Wafa' },
 ]
 
 interface TahunItem { id: string; nama: string; is_active: boolean }
@@ -32,6 +27,7 @@ export default function AdminExportPage() {
   const [tahunList,   setTahunList]   = useState<TahunItem[]>([])
   const [kelasList,   setKelasList]   = useState<KelasItem[]>([])
   const [isLoading,   setIsLoading]   = useState(false)
+  const [preview, setPreview]         = useState<{ siswa: number; kelas: number } | null>(null)
   const { showToast, ToastComponent } = useToast()
 
   useEffect(() => {
@@ -50,6 +46,17 @@ export default function AdminExportPage() {
       .then(r => r.json())
       .then(data => setKelasList(Array.isArray(data) ? data : []))
   }, [tahunId])
+
+  // Fetch preview counts
+  useEffect(() => {
+    if (!tahunId) { setPreview(null); return }
+    const params = new URLSearchParams({ tahunId })
+    if (kelasId) params.set('kelasId', kelasId)
+    fetch(`/api/admin/export?preview=1&${params}`)
+      .then(r => r.json())
+      .then(data => setPreview({ siswa: data.siswa ?? 0, kelas: data.kelas ?? 0 }))
+      .catch(() => setPreview(null))
+  }, [tahunId, kelasId])
 
   async function handleExport() {
     if (!tahunId) return
@@ -78,8 +85,8 @@ export default function AdminExportPage() {
 
       <div className="px-4 py-4 max-w-lg mx-auto space-y-4">
 
-        {/* Pilih jenis data */}
-        <section className="card">
+        {/* Jenis Data */}
+        <section className="bg-white rounded-xl shadow-card border border-neutral-100 p-4">
           <h3 className="text-sm font-bold text-neutral-700 mb-3">Jenis Data</h3>
           <div className="space-y-2">
             {EXPORT_TYPES.map(t => (
@@ -93,22 +100,23 @@ export default function AdminExportPage() {
                     : 'border-neutral-200 hover:border-neutral-300'
                 )}
               >
-                <span className="text-xl">{t.icon}</span>
-                <div>
+                <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', type === t.value ? 'bg-primary-100 text-primary-600' : 'bg-neutral-100 text-neutral-400')}>
+                  {t.icon}
+                </div>
+                <div className="flex-1">
                   <p className={cn('text-sm font-semibold', type === t.value ? 'text-primary-700' : 'text-neutral-700')}>{t.label}</p>
                   <p className="text-xs text-neutral-400">{t.desc}</p>
                 </div>
-                {type === t.value && <span className="ml-auto text-primary-500 font-bold">✓</span>}
+                {type === t.value && <span className="text-primary-500 font-bold">✓</span>}
               </button>
             ))}
           </div>
         </section>
 
         {/* Filter */}
-        <section className="card space-y-3">
+        <section className="bg-white rounded-xl shadow-card border border-neutral-100 p-4 space-y-3">
           <h3 className="text-sm font-bold text-neutral-700">Filter</h3>
 
-          {/* Tahun ajaran */}
           <div>
             <label className="block text-xs font-semibold text-neutral-600 mb-1">Tahun Ajaran</label>
             <select value={tahunId} onChange={e => setTahunId(e.target.value)} className="w-full h-10 px-3 border border-neutral-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-300">
@@ -116,16 +124,14 @@ export default function AdminExportPage() {
             </select>
           </div>
 
-          {/* Kelas */}
           <div>
-            <label className="block text-xs font-semibold text-neutral-600 mb-1">Kelas <span className="font-normal text-neutral-400">(opsional - kosong = semua kelas)</span></label>
+            <label className="block text-xs font-semibold text-neutral-600 mb-1">Kelas <span className="font-normal text-neutral-400">(opsional)</span></label>
             <select value={kelasId} onChange={e => setKelasId(e.target.value)} className="w-full h-10 px-3 border border-neutral-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-300">
-              <option value="">Semua Kelas</option>
+              <option value="">Semua Kelas Aktif</option>
               {kelasList.map(k => <option key={k.id} value={k.id}>Kelas {k.nama_kelas}</option>)}
             </select>
           </div>
 
-          {/* Rentang tanggal */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-neutral-600 mb-1">Dari Tanggal</label>
@@ -137,6 +143,27 @@ export default function AdminExportPage() {
             </div>
           </div>
         </section>
+
+        {/* Preview */}
+        {preview && (
+          <div className="bg-primary-50 rounded-xl border border-primary-200 p-4">
+            <p className="text-xs font-semibold text-primary-600 mb-2">Ringkasan Export</p>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div>
+                <p className="text-lg font-bold text-primary-800">{preview.siswa}</p>
+                <p className="text-[11px] text-primary-500">Siswa</p>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-primary-800">{preview.kelas}</p>
+                <p className="text-[11px] text-primary-500">Kelas</p>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-primary-800 leading-tight">{formatTanggal(dateFrom)} - {formatTanggal(dateTo)}</p>
+                <p className="text-[11px] text-primary-500">Periode</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Tombol export */}
         <button
@@ -150,11 +177,42 @@ export default function AdminExportPage() {
           {isLoading ? (
             <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Mengekspor...</>
           ) : (
-            <>📤 Export ke Excel</>
+            <span className="flex items-center gap-2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Download Excel
+            </span>
           )}
         </button>
       </div>
       {ToastComponent}
     </div>
+  )
+}
+
+function IconCheck() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 11l3 3L22 4" />
+      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+    </svg>
+  )
+}
+function IconBook() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+    </svg>
+  )
+}
+function IconStar() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
   )
 }

@@ -1,10 +1,10 @@
 // ============================================================
 // app/guru/page.tsx
-// Dashboard Guru — server component
+// Dashboard Guru — server component (per-class cards)
 // ============================================================
 
-import { redirect }           from 'next/navigation'
-import { getStaffSession }    from '@/lib/auth/staff'
+import { redirect }            from 'next/navigation'
+import { getStaffSession }     from '@/lib/auth/staff'
 import { createServiceClient } from '@/lib/supabase/server'
 import { GuruDashboardClient } from './GuruDashboardClient'
 
@@ -21,45 +21,80 @@ export default async function GuruPage() {
     .eq('is_active', true)
     .single()
 
-  // Filter by assigned classes only
+  let kelasCards: Array<{
+    kelasId: string
+    namaKelas: string
+    jumlahSiswa: number
+    mutabaahToday: number
+    totalItems: number
+    checkedItems: number
+  }> = []
   let totalSiswa = 0
   let totalKelas = 0
   let mutabaahToday = 0
 
   if (tahunAktif) {
+    // Get assigned classes
     const { data: kelasSaya } = await supabase
       .from('kelas')
-      .select('id')
+      .select('id, nama_kelas')
       .eq('tahun_ajaran_id', tahunAktif.id)
       .eq('wali_kelas_id', session.userId)
 
-    const kelasIds = kelasSaya?.map(k => k.id) ?? []
-    totalKelas = kelasSaya?.length ?? 0
+    const kelasList = kelasSaya ?? []
+    totalKelas = kelasList.length
+
     const today = new Date().toISOString().split('T')[0]
 
-    if (kelasIds.length > 0) {
+    for (const kelas of kelasList) {
+      // Count students in this class
       const { count: sCount } = await supabase
         .from('siswa_kelas')
         .select('*', { count: 'exact', head: true })
-        .in('kelas_id', kelasIds)
+        .eq('kelas_id', kelas.id)
         .eq('tahun_ajaran_id', tahunAktif.id)
-      totalSiswa = sCount ?? 0
 
+      const jumlahSiswa = sCount ?? 0
+      totalSiswa += jumlahSiswa
+
+      // Get student IDs in this class
       const { data: siswaIds } = await supabase
         .from('siswa_kelas')
         .select('siswa_id')
-        .in('kelas_id', kelasIds)
+        .eq('kelas_id', kelas.id)
         .eq('tahun_ajaran_id', tahunAktif.id)
 
       const ids = siswaIds?.map(s => s.siswa_id) ?? []
+
+      // Count mutabaah logs today for these students
+      let kelasMutabaahToday = 0
       if (ids.length > 0) {
         const { count: mCount } = await supabase
           .from('mutabaah_log')
           .select('*', { count: 'exact', head: true })
           .in('siswa_id', ids)
           .eq('tanggal', today)
-        mutabaahToday = mCount ?? 0
+        kelasMutabaahToday = mCount ?? 0
       }
+
+      mutabaahToday += kelasMutabaahToday
+
+      // Get active items for this class
+      const { data: activeItems } = await supabase
+        .from('kelas_mutabaah_item')
+        .select('mutabaah_item_id')
+        .eq('kelas_id', kelas.id)
+
+      const totalItems = activeItems?.length ?? 0
+
+      kelasCards.push({
+        kelasId: kelas.id,
+        namaKelas: kelas.nama_kelas,
+        jumlahSiswa,
+        mutabaahToday: kelasMutabaahToday,
+        totalItems,
+        checkedItems: 0,
+      })
     }
   }
 
@@ -69,9 +104,10 @@ export default async function GuruPage() {
       stats={{
         totalSiswa,
         totalKelas,
-        tahunAktif:  tahunAktif?.nama ?? 'Belum ada',
+        tahunAktif: tahunAktif?.nama ?? 'Belum ada',
         mutabaahToday,
       }}
+      kelasCards={kelasCards}
     />
   )
 }

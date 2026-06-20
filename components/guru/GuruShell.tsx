@@ -147,7 +147,7 @@ function SidebarContent({
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-display font-bold text-lg leading-tight">SIMAK</p>
-          <p className="text-primary-300 text-[10px] leading-tight">SDIT Al-Kautsar Mukumuko</p>
+          <p className="text-primary-300 text-[10px] leading-tight">SDIT Al-Kautsar Muko-muko</p>
         </div>
         {onClose && (
           <button

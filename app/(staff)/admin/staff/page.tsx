@@ -1,8 +1,3 @@
-// ============================================================
-// app/(staff)/admin/staff/page.tsx
-// Kelola Akun Staff — buat, edit, nonaktifkan
-// ============================================================
-
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -12,8 +7,10 @@ import { cn }                  from '@/lib/utils/cn'
 interface StaffRow {
   id:         string
   nama:       string
+  email:      string
   role:       string
   is_active:  boolean
+  kelas:      string[]
   created_at: string
 }
 
@@ -36,7 +33,8 @@ export default function AdminStaffPage() {
   const [isLoading,   setIsLoading]   = useState(true)
   const [showForm,    setShowForm]    = useState(false)
   const [editStaff,   setEditStaff]   = useState<StaffRow | null>(null)
-  const [confirmDeact, setConfirmDeact] = useState<string | null>(null)
+  const [confirmDel, setConfirmDel]   = useState<StaffRow | null>(null)
+  const [delLoading,  setDelLoading]  = useState(false)
 
   // Form state
   const [formEmail,    setFormEmail]    = useState('')
@@ -95,10 +93,19 @@ export default function AdminStaffPage() {
     setFormLoading(false)
   }
 
-  async function handleDeactivate(id: string) {
-    const res = await fetch(`/api/admin/staff/${id}`, { method: 'DELETE' })
-    if (res.ok) { showToast('Akun dinonaktifkan', 'success'); setConfirmDeact(null); fetchStaff() }
-    else { const d = await res.json(); showToast(d.error ?? 'Gagal', 'error') }
+  async function handleDelete() {
+    if (!confirmDel) return
+    setDelLoading(true)
+    const res = await fetch(`/api/admin/staff/${confirmDel.id}`, { method: 'DELETE' })
+    const data = await res.json()
+    if (res.ok) {
+      showToast(data.message ?? 'Akun dihapus', 'success')
+      setConfirmDel(null)
+      fetchStaff()
+    } else {
+      showToast(data.error ?? 'Gagal menghapus', 'error')
+    }
+    setDelLoading(false)
   }
 
   return (
@@ -106,7 +113,7 @@ export default function AdminStaffPage() {
       <div className="bg-white border-b border-neutral-100 px-4 py-4 sticky top-14 md:top-0 z-30">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-neutral-800">Kelola Akun Guru</h2>
+            <h2 className="text-lg font-bold text-neutral-800">Kelola Guru</h2>
             <p className="text-xs text-neutral-400 mt-0.5">{staffList.filter(s => s.is_active).length} akun aktif</p>
           </div>
           <button onClick={openAddForm} className="h-9 px-3 bg-primary-500 text-white text-xs font-semibold rounded-lg">+ Buat Akun</button>
@@ -131,18 +138,27 @@ export default function AdminStaffPage() {
           </div>
         ) : (
           staffList.map((staff, i) => (
-            <div key={staff.id} className={cn('card animate-in', !staff.is_active && 'opacity-60')} style={{ animationDelay: `${i * 0.03}s` }}>
-              {confirmDeact === staff.id ? (
-                <div className="space-y-2">
-                  <p className="text-sm font-semibold text-neutral-700">Nonaktifkan akun {staff.nama}?</p>
+            <div key={staff.id} className={cn('bg-white rounded-xl shadow-card border border-neutral-100 p-4 animate-in', !staff.is_active && 'opacity-60')} style={{ animationDelay: `${i * 0.03}s` }}>
+              {confirmDel?.id === staff.id ? (
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold text-neutral-700">
+                    Hapus akun <span className="text-danger">{staff.nama}</span>?
+                  </p>
+                  <p className="text-xs text-neutral-400">
+                    {staff.kelas.length > 0
+                      ? 'Akun memiliki data kelas. Akses akan dinonaktifkan tapi data histori dipertahankan.'
+                      : 'Akun akan dihapus permanen dari sistem.'}
+                  </p>
                   <div className="flex gap-2">
-                    <button onClick={() => setConfirmDeact(null)} className="flex-1 py-1.5 text-xs border border-neutral-200 rounded-md font-semibold">Batal</button>
-                    <button onClick={() => handleDeactivate(staff.id)} className="flex-1 py-1.5 text-xs bg-danger text-white rounded-md font-semibold">Nonaktifkan</button>
+                    <button onClick={() => setConfirmDel(null)} className="flex-1 py-2 text-xs border border-neutral-200 rounded-lg font-semibold">Batal</button>
+                    <button onClick={handleDelete} disabled={delLoading} className="flex-1 py-2 text-xs bg-danger text-white rounded-lg font-semibold disabled:opacity-50">
+                      {delLoading ? 'Menghapus...' : 'Hapus'}
+                    </button>
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
                     <span className="text-primary-700 font-bold text-sm">{staff.nama.charAt(0)}</span>
                   </div>
                   <div className="flex-1 min-w-0">
@@ -150,17 +166,27 @@ export default function AdminStaffPage() {
                       <p className="font-semibold text-sm text-neutral-800 truncate">{staff.nama}</p>
                       {!staff.is_active && <span className="text-[10px] bg-neutral-200 text-neutral-500 px-1.5 py-0.5 rounded-full font-semibold">Nonaktif</span>}
                     </div>
-                    <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full', ROLE_COLOR[staff.role] ?? 'bg-neutral-100 text-neutral-500')}>
-                      {ROLE_LABEL[staff.role] ?? staff.role}
-                    </span>
+                    {staff.email && (
+                      <p className="text-xs text-neutral-400 mt-0.5 truncate">{staff.email}</p>
+                    )}
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full', ROLE_COLOR[staff.role] ?? 'bg-neutral-100 text-neutral-500')}>
+                        {ROLE_LABEL[staff.role] ?? staff.role}
+                      </span>
+                      {staff.kelas.length > 0 && (
+                        <span className="text-[10px] text-neutral-400">
+                          Kelas: {staff.kelas.join(', ')}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex gap-1">
-                    <button onClick={() => openEditForm(staff)} className="w-8 h-8 flex items-center justify-center rounded-lg text-neutral-400 hover:text-primary-500 hover:bg-primary-50">
+                  <div className="flex gap-1 flex-shrink-0">
+                    <button onClick={() => openEditForm(staff)} className="w-8 h-8 flex items-center justify-center rounded-lg text-neutral-400 hover:text-primary-500 hover:bg-primary-50" title="Edit">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
                     {staff.is_active && (
-                      <button onClick={() => setConfirmDeact(staff.id)} className="w-8 h-8 flex items-center justify-center rounded-lg text-neutral-400 hover:text-danger hover:bg-red-50">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                      <button onClick={() => setConfirmDel(staff)} className="w-8 h-8 flex items-center justify-center rounded-lg text-neutral-400 hover:text-danger hover:bg-red-50" title="Hapus Akun">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/></svg>
                       </button>
                     )}
                   </div>
@@ -185,14 +211,12 @@ export default function AdminStaffPage() {
               {!editStaff && (
                 <div>
                   <label className="block text-sm font-semibold text-neutral-700 mb-1.5">Email <span className="text-danger">*</span></label>
-                  <input type="email" value={formEmail} onChange={e => setFormEmail(e.target.value)} placeholder="nama@simak.sch.id" className="w-full h-11 px-4 border border-neutral-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-300" required />
+                  <input type="email" value={formEmail} onChange={e => setFormEmail(e.target.value)} placeholder="guru@sditalkautsar.sch.id" className="w-full h-11 px-4 border border-neutral-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-300" required />
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-semibold text-neutral-700 mb-1.5">
-                  Nama Lengkap <span className="text-danger">*</span>
-                </label>
+                <label className="block text-sm font-semibold text-neutral-700 mb-1.5">Nama Lengkap <span className="text-danger">*</span></label>
                 <input type="text" value={formNama} onChange={e => setFormNama(e.target.value)} placeholder="Ustadzah ..." className="w-full h-11 px-4 border border-neutral-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-300" required />
               </div>
 

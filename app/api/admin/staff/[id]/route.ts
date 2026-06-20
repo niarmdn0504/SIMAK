@@ -1,7 +1,7 @@
 // ============================================================
 // app/api/admin/staff/[id]/route.ts
 // PATCH:  Edit nama / role / toggle aktif / reset password
-// DELETE: Nonaktifkan akun staff
+// DELETE: Hapus akun (hard delete jika tanpa histori, soft delete jika ada)
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -18,7 +18,6 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const body   = await request.json()
     const { nama, role, isActive, newPassword } = body
 
-    // Jangan izinkan admin menonaktifkan diri sendiri
     if (id === me.userId && isActive === false) {
       return NextResponse.json({ error: 'Tidak bisa menonaktifkan akun sendiri' }, { status: 400 })
     }
@@ -33,7 +32,6 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       if (error) throw error
     }
 
-    // Reset password
     if (newPassword) {
       if (newPassword.length < 8) {
         return NextResponse.json({ error: 'Password minimal 8 karakter' }, { status: 400 })
@@ -60,14 +58,33 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Tidak bisa menghapus akun sendiri' }, { status: 400 })
     }
 
-    // Soft delete — set is_active = false
-    const { error } = await svc.from('user_profile').update({ is_active: false }).eq('id', id)
-    if (error) throw error
+    // Check for history: tahfiz_log, wafa_log, mutabaah_log (via siswa assignments)
+    const [tahfizRes, wafaRes] = await Promise.all([
+      svc.from('tahfiz_log').select('id', { count: 'exact', head: true }).eq('guru_id', id),
+      svc.from('wafa_log').select('id', { count: 'exact', head: true }).eq('guru_id', id),
+    ])
 
-    return NextResponse.json({ success: true })
+    const hasHistory = (tahfizRes.count ?? 0) > 0 || (wafaRes.count ?? 0) > 0
+
+    if (hasHistory) {
+      // Soft delete: nonaktifkan akses, pertahankan data
+      await svc.from('user_profile').update({ is_active: false }).eq('id', id)
+      await svc.from('user_roles').delete().eq('user_id', id)
+      // Revoke auth session
+      await svc.auth.admin.signOut(id)
+      return NextResponse.json({ success: true, method: 'soft', message: 'Akun dinonaktifkan, data histori dipertahankan' })
+    } else {
+      // Hard delete: hapus semua
+      await svc.from('user_roles').delete().eq('user_id', id)
+      await svc.from('kelas').update({ wali_kelas_id: null }).eq('wali_kelas_id', id)
+      await svc.from('user_profile').delete().eq('id', id)
+      await svc.auth.admin.deleteUser(id)
+      return NextResponse.json({ success: true, method: 'hard', message: 'Akun dihapus permanen' })
+    }
   } catch (err: unknown) {
     if (err instanceof Error && err.message === 'UNAUTHORIZED') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     if (err instanceof Error && err.message === 'FORBIDDEN')    return NextResponse.json({ error: 'Forbidden' },    { status: 403 })
+    console.error('DELETE /api/admin/staff:', err)
     return NextResponse.json({ error: 'Terjadi kesalahan' }, { status: 500 })
   }
 }

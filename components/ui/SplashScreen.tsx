@@ -33,7 +33,7 @@ export function SplashScreen() {
         Monitoring Akhlak & Karakter
       </p>
       <p className="text-primary-200 text-xs font-body mt-1">
-        SDIT Al-Kautsar Mukumuko
+        SDIT Al-Kautsar Muko-muko
       </p>
 
       {/* Loading dots */}
