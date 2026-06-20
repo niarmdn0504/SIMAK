@@ -4,21 +4,19 @@ import { createServerClient }        from '@/lib/supabase/server'
 
 export async function GET() {
   try {
-    await requireRole(['admin'])
+    const session = await requireRole(['admin'])
     const supabase = await createServerClient()
 
-    const [kelasRes, guruRes] = await Promise.all([
-      supabase.from('kelas').select(`
-        id, nama_kelas,
-        tahun_ajaran:tahun_ajaran_id ( id, nama ),
-        wali_kelas:wali_kelas_id ( id, nama )
-      `).order('nama_kelas'),
+    const [kelasRes, guruRes, tahunAjaranRes] = await Promise.all([
+      supabase.from('kelas').select('id, nama_kelas, tahun_ajaran_id, wali_kelas_id').order('nama_kelas'),
       supabase.from('user_profile').select('id, nama, role').neq('role', 'admin').order('nama'),
+      supabase.from('tahun_ajaran').select('id, nama').order('nama'),
     ])
 
     return NextResponse.json({
-      kelas: kelasRes.data ?? [],
-      guru:  guruRes.data ?? [],
+      kelas:     kelasRes.data ?? [],
+      guru:      guruRes.data ?? [],
+      tahunAjaran: tahunAjaranRes.data ?? [],
     })
   } catch (err: unknown) {
     if (err instanceof Error) {
@@ -31,7 +29,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireRole(['admin'])
+    const session = await requireRole(['admin'])
     const supabase = await createServerClient()
     const { kelasId, guruId } = await request.json()
 
@@ -46,7 +44,19 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error
 
-    return NextResponse.json({ success: true })
+    // Get updated data after successful assignment
+    const [kelasRes, guruRes, tahunAjaranRes] = await Promise.all([
+      supabase.from('kelas').select('id, nama_kelas, tahun_ajaran_id, wali_kelas_id').order('nama_kelas'),
+      supabase.from('user_profile').select('id, nama, role').neq('role', 'admin').order('nama'),
+      supabase.from('tahun_ajaran').select('id, nama').order('nama'),
+    ])
+
+    return NextResponse.json({
+      success: true,
+      kelas:     kelasRes.data ?? [],
+      guru:      guruRes.data ?? [],
+      tahunAjaran: tahunAjaranRes.data ?? [],
+    })
   } catch (err: unknown) {
     if (err instanceof Error) {
       if (err.message === 'UNAUTHORIZED') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

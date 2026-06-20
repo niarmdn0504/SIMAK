@@ -6,8 +6,8 @@ import { useToast }            from '@/components/ui/Toast'
 interface KelasItem {
   id: string
   nama_kelas: string
-  tahun_ajaran: { id: string; nama: string }
-  wali_kelas: { id: string; nama: string } | null
+  tahun_ajaran_id: string
+  wali_kelas_id: string | null
 }
 
 interface GuruItem {
@@ -16,11 +16,14 @@ interface GuruItem {
   role: string
 }
 
+interface TahunAjaranItem { id: string; nama: string }
+
 export default function AssignGuruPage() {
-  const [kelas,   setKelas]   = useState<KelasItem[]>([])
-  const [guru,    setGuru]    = useState<GuruItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [saving,  setSaving]  = useState<string | null>(null)
+  const [kelas,     setKelas]     = useState<KelasItem[]>([])
+  const [guru,      setGuru]      = useState<GuruItem[]>([])
+  const [tahunAjaran, setTahunAjaran] = useState<TahunAjaranItem[]>([])
+  const [loading,   setLoading]   = useState(true)
+  const [saving,    setSaving]    = useState<string | null>(null)
   const { showToast, ToastComponent } = useToast()
 
   async function fetchData() {
@@ -29,6 +32,7 @@ export default function AssignGuruPage() {
     const data = await res.json()
     setKelas(data.kelas ?? [])
     setGuru(data.guru ?? [])
+    setTahunAjaran(data.tahunAjaran ?? [])
     setLoading(false)
   }
 
@@ -42,8 +46,12 @@ export default function AssignGuruPage() {
       body: JSON.stringify({ kelasId, guruId: guruId || null }),
     })
     if (res.ok) {
+      const data = await res.json()
+      // Update state immediately without refetching
+      if (data.kelas) setKelas(data.kelas)
+      if (data.guru) setGuru(data.guru)
+      if (data.tahunAjaran) setTahunAjaran(data.tahunAjaran)
       showToast('Guru berhasil ditugaskan', 'success')
-      fetchData()
     } else {
       showToast('Gagal menyimpan', 'error')
     }
@@ -62,11 +70,13 @@ export default function AssignGuruPage() {
           <div key={k.id} className="card flex items-center gap-4 p-4">
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm text-neutral-800">{k.nama_kelas}</p>
-              <p className="text-[11px] text-neutral-400">{k.tahun_ajaran.nama}</p>
+              <p className="text-[11px] text-neutral-400">
+                Tahun Ajaran: {tahunAjaran.find(ta => ta.id === k.tahun_ajaran_id)?.nama}
+              </p>
             </div>
             <select
               className="input text-sm max-w-48"
-              value={k.wali_kelas?.id ?? ''}
+              value={k.wali_kelas_id ?? ''}
               onChange={e => handleAssign(k.id, e.target.value)}
               disabled={saving === k.id}
             >
