@@ -22,7 +22,12 @@ export async function GET(request: NextRequest) {
       .eq('is_active', true)
       .single()
 
-    if (!tahunAjaran) return NextResponse.json({ siswaList: [], stats: null })
+    if (!tahunAjaran) {
+      return NextResponse.json({
+        siswaList: [], stats: null,
+        _debug: { error: 'tahun_ajaran not found / is_active=false', sessionUserId: session.userId, email: session.email },
+      })
+    }
 
     // Cari profile guru untuk memastikan ID konsisten
     const { data: profileSelf } = await supabase
