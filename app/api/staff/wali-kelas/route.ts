@@ -23,10 +23,7 @@ export async function GET(request: NextRequest) {
       .single()
 
     if (!tahunAjaran) {
-      return NextResponse.json({
-        siswaList: [], stats: null,
-        _debug: { error: 'tahun_ajaran not found', sessionUserId: session.userId, email: session.email },
-      })
+      return NextResponse.json({ siswaList: [], stats: null })
     }
 
     // Cari profile guru untuk memastikan ID konsisten
@@ -48,16 +45,7 @@ export async function GET(request: NextRequest) {
     const matchedKelas = (semuaKelas ?? []).filter(k => k.wali_kelas_id === guruId)
 
     if (matchedKelas.length === 0) {
-      return NextResponse.json({
-        siswaList: [],
-        stats: null,
-        _debug: {
-          sessionUserId: session.userId,
-          guruId,
-          email: session.email,
-          semuaKelas: semuaKelas ?? [],
-        },
-      })
+      return NextResponse.json({ siswaList: [], stats: null })
     }
 
     const kelasIds = matchedKelas.map(k => k.id)

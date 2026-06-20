@@ -25,12 +25,35 @@ export async function getStaffSession(): Promise<StaffSessionData | null> {
 
     if (profileError || !profile || !profile.is_active) return null
 
+    const primaryRole = profile.role as StaffRole
+    let allRoles: StaffRole[] = [primaryRole]
+
+    // Multi-role support via user_roles table
+    try {
+      const { data: extraRoles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+
+      if (extraRoles && extraRoles.length > 0) {
+        const roleSet = new Set<StaffRole>([primaryRole])
+        for (const r of extraRoles) {
+          if (['wali_kelas', 'guru_tahfiz', 'guru_wafa'].includes(r.role)) {
+            roleSet.add(r.role as StaffRole)
+          }
+        }
+        allRoles = Array.from(roleSet)
+      }
+    } catch {
+      // user_roles table might not exist yet — fallback to primary role
+    }
+
     return {
       userId: user.id,
       email:  user.email ?? '',
       nama:   profile.nama,
-      role:   profile.role as StaffRole,
-      roles:  [profile.role as StaffRole],
+      role:   primaryRole,
+      roles:  allRoles,
     }
   } catch {
     return null

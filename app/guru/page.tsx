@@ -31,6 +31,7 @@ export default async function GuruPage() {
       .from('kelas')
       .select('id')
       .eq('tahun_ajaran_id', tahunAktif.id)
+      .eq('wali_kelas_id', session.userId)
 
     const kelasIds = kelasSaya?.map(k => k.id) ?? []
     totalKelas = kelasSaya?.length ?? 0
