@@ -5,37 +5,27 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireStaffSession }       from '@/lib/auth/staff'
-import { createServerClient, createServiceClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 import { getTodayWIB }               from '@/lib/utils/date'
 
 export async function GET(request: NextRequest) {
   try {
     const session  = await requireStaffSession()
-    const supabase = await createServerClient()
+    const supabase = createServiceClient()
     const { searchParams } = new URL(request.url)
     const tanggal  = searchParams.get('tanggal') ?? getTodayWIB()
 
-    // Ambil tahun ajaran aktif — fallback pake service_client kalo RLS block
-    let { data: tahunAjaran } = await supabase
+    // Ambil tahun ajaran aktif (service_client bypass RLS)
+    const { data: tahunAjaran } = await supabase
       .from('tahun_ajaran')
       .select('id')
       .eq('is_active', true)
       .single()
 
     if (!tahunAjaran) {
-      const svc = createServiceClient()
-      const { data: ta2 } = await svc
-        .from('tahun_ajaran')
-        .select('id')
-        .eq('is_active', true)
-        .single()
-      tahunAjaran = ta2
-    }
-
-    if (!tahunAjaran) {
       return NextResponse.json({
         siswaList: [], stats: null,
-        _debug: { error: 'tahun_ajaran not found even via service role', sessionUserId: session.userId, email: session.email },
+        _debug: { error: 'tahun_ajaran not found', sessionUserId: session.userId, email: session.email },
       })
     }
 
@@ -48,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     const guruId = profileSelf?.id ?? session.userId
 
-    // Diagnose: coba select semua kelas tanpa filter
+    // Ambil semua kelas di tahun ajaran ini
     const { data: semuaKelas } = await supabase
       .from('kelas')
       .select('id, nama_kelas, wali_kelas_id')
