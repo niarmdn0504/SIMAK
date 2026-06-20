@@ -24,30 +24,24 @@ export async function GET(request: NextRequest) {
 
     if (!tahunAjaran) return NextResponse.json({ siswaList: [], stats: null })
 
+    // Cari profile guru untuk memastikan ID konsisten
+    const { data: profileSelf } = await supabase
+      .from('user_profile')
+      .select('id')
+      .eq('id', session.userId)
+      .single()
+
+    const guruId = profileSelf?.id ?? session.userId
+
     // Ambil kelas wali kelas ini
     const { data: kelasList } = await supabase
       .from('kelas')
       .select('id, nama_kelas')
-      .eq('wali_kelas_id', session.userId)
+      .eq('wali_kelas_id', guruId)
       .eq('tahun_ajaran_id', tahunAjaran.id)
 
     if (!kelasList || kelasList.length === 0) {
-      // Ketika tidak ada kelas, cek apakah wali_kelas_id di kelas
-      // memang kosong atau ada mismatch
-      const { data: allKelas } = await supabase
-        .from('kelas')
-        .select('id, nama_kelas, wali_kelas_id')
-        .eq('tahun_ajaran_id', tahunAjaran.id)
-
-      return NextResponse.json({
-        siswaList: [],
-        stats: null,
-        _debug: {
-          sessionUserId: session.userId,
-          sessionEmail:  session.email,
-          allKelas: allKelas ?? [],
-        },
-      })
+      return NextResponse.json({ siswaList: [], stats: null })
     }
 
     const kelasIds = kelasList.map(k => k.id)
