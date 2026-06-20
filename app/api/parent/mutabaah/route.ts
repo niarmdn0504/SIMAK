@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch items — handle parent_id column missing gracefully
-    let items: Array<{ id: string; nama_item: string; urutan: number; parent_id: string | null }> = []
+    let allItems: Array<{ id: string; nama_item: string; urutan: number; parent_id: string | null }> = []
     const { data: itemsData, error: itemsError } = await supabase
       .from('mutabaah_item')
       .select('id, nama_item, urutan, parent_id')
@@ -131,11 +131,41 @@ export async function GET(request: NextRequest) {
         .eq('tahun_ajaran_id', tahunAjaran.id)
         .eq('is_active', true)
         .order('urutan', { ascending: true })
-      items = (fallbackItems ?? []).map(i => ({ ...i, parent_id: null }))
+      allItems = (fallbackItems ?? []).map(i => ({ ...i, parent_id: null }))
     } else {
       if (itemsError) throw itemsError
-      items = itemsData ?? []
+      allItems = itemsData ?? []
     }
+
+    // Filter items by kelas (guru pilih item yang berlaku)
+    const { data: siswaKelas } = await supabase
+      .from('siswa_kelas')
+      .select('kelas_id')
+      .eq('siswa_id', session.siswaId)
+      .eq('tahun_ajaran_id', tahunAjaran.id)
+      .maybeSingle()
+
+    if (siswaKelas?.kelas_id) {
+      const { data: kelasItems } = await supabase
+        .from('kelas_mutabaah_item')
+        .select('mutabaah_item_id')
+        .eq('kelas_id', siswaKelas.kelas_id)
+
+      if (kelasItems && kelasItems.length > 0) {
+        const activeIdSet = new Set(kelasItems.map(k => k.mutabaah_item_id))
+        // Keep active items + their parents
+        const activeItemIds = new Set<string>()
+        for (const i of allItems) {
+          if (activeIdSet.has(i.id)) {
+            activeItemIds.add(i.id)
+            if (i.parent_id) activeItemIds.add(i.parent_id)
+          }
+        }
+        allItems = allItems.filter(i => activeItemIds.has(i.id))
+      }
+    }
+
+    const items = allItems
 
     // Ambil log untuk hari ini
     const { data: logs } = await supabase

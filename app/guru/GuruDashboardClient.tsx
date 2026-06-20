@@ -35,6 +35,12 @@ const MENU_CARDS: MenuCard[] = [
     icon: '📖',
     color: 'from-green-500 to-green-600',
   },
+  {
+    href: '/guru/atur-mutabaah',
+    label: 'Atur Item Mutabaah',
+    icon: '⚙️',
+    color: 'from-purple-500 to-purple-600',
+  },
 ]
 
 export function GuruDashboardClient({

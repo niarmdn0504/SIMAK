@@ -327,6 +327,26 @@ export interface Database {
         }
         Relationships: []
       }
+
+      kelas_mutabaah_item: {
+        Row: {
+          id:               string
+          kelas_id:         string
+          mutabaah_item_id: string
+          created_at:       string
+        }
+        Insert: {
+          id?:              string
+          kelas_id:         string
+          mutabaah_item_id: string
+          created_at?:      string
+        }
+        Update: {
+          kelas_id?:         string
+          mutabaah_item_id?: string
+        }
+        Relationships: []
+      }
     }
 
     Views: {}
@@ -377,5 +397,6 @@ export type MutabaahItem = Tables<'mutabaah_item'>
 export type MutabaahLog  = Tables<'mutabaah_log'>
 export type TahfizLog    = Tables<'tahfiz_log'>
 export type WafaLog      = Tables<'wafa_log'>
-export type UserProfile  = Tables<'user_profile'>
-export type ParentSession = Tables<'parent_sessions'>
+export type UserProfile       = Tables<'user_profile'>
+export type ParentSession     = Tables<'parent_sessions'>
+export type KelasMutabaahItem = Tables<'kelas_mutabaah_item'>

@@ -30,7 +30,19 @@ export function MutabaahChecklist({
   const { showToast, ToastComponent } = useToast()
   const [savingId, setSavingId] = useState<string | null>(null)
 
-  const checkedCount = items.filter(i => i.is_checked).length
+  // Build hierarchy: parents + standalone items
+  const parentItems = items.filter(i => !i.parent_id)
+  const childItems  = items.filter(i => i.parent_id)
+  const hierarchicalItems = parentItems.map(p => ({
+    ...p,
+    children: childItems.filter(c => c.parent_id === p.id),
+  }))
+
+  // Count leaf items only for progress bar
+  const leafItems = hierarchicalItems.flatMap(p =>
+    p.children.length > 0 ? p.children : [p]
+  )
+  const checkedCount = leafItems.filter(i => i.is_checked).length
 
   function handleToggle(item: MutabaahItemWithStatus) {
     if (isLocked) {
@@ -63,7 +75,7 @@ export function MutabaahChecklist({
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-semibold text-neutral-600">
-            {checkedCount} dari {items.length} ibadah
+            {checkedCount} dari {leafItems.length} ibadah
           </span>
           <span className={cn(
             'text-sm font-bold tabular-nums',
@@ -74,7 +86,6 @@ export function MutabaahChecklist({
           </span>
         </div>
 
-        {/* Progress bar */}
         <div className="h-2 bg-neutral-100 rounded-full overflow-hidden">
           <div
             className={cn(
@@ -87,7 +98,6 @@ export function MutabaahChecklist({
         </div>
       </div>
 
-      {/* Status badge */}
       {isLocked && (
         <div className="mb-3 flex items-center gap-2 py-2 px-3 bg-neutral-100 rounded-md">
           <span className="text-neutral-400 text-sm">🔒</span>
@@ -106,18 +116,59 @@ export function MutabaahChecklist({
         </div>
       )}
 
-      {/* Checklist items */}
-      <div className="space-y-2">
-        {items.map((item, index) => (
-          <MutabaahItem
-            key={item.id}
-            item={item}
-            isSaving={savingId === item.id}
-            isLocked={isLocked}
-            onToggle={() => handleToggle(item)}
-            index={index}
-          />
-        ))}
+      <div className="space-y-3">
+        {hierarchicalItems.map((parent) => {
+          const hasChildren = parent.children.length > 0
+          const childrenChecked = parent.children.filter(c => c.is_checked).length
+          const allDone = hasChildren && childrenChecked === parent.children.length
+
+          return hasChildren ? (
+            <div
+              key={parent.id}
+              className={cn(
+                'rounded-lg border overflow-hidden',
+                allDone ? 'bg-primary-50 border-primary-200' : 'bg-white border-neutral-200'
+              )}
+            >
+              {/* Parent header — NOT toggleable */}
+              <div className="flex items-center gap-3 p-3">
+                <div className={cn(
+                  'w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold',
+                  allDone ? 'bg-primary-500 text-white' : 'bg-neutral-200 text-neutral-500'
+                )}>
+                  {allDone ? '✓' : childrenChecked}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-neutral-800">{parent.nama_item}</p>
+                  <p className="text-xs text-neutral-400">{childrenChecked} dari {parent.children.length}</p>
+                </div>
+              </div>
+
+              {/* Children */}
+              <div className="px-3 pb-3 space-y-1.5 border-t border-neutral-100 pt-1.5">
+                {parent.children.map((child, ci) => (
+                  <MutabaahItem
+                    key={child.id}
+                    item={child}
+                    isSaving={savingId === child.id}
+                    isLocked={isLocked}
+                    onToggle={() => handleToggle(child)}
+                    index={ci}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <MutabaahItem
+              key={parent.id}
+              item={parent}
+              isSaving={savingId === parent.id}
+              isLocked={isLocked}
+              onToggle={() => handleToggle(parent)}
+              index={items.indexOf(parent)}
+            />
+          )
+        })}
       </div>
 
       {ToastComponent}

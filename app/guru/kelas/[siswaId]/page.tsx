@@ -1,6 +1,6 @@
 import { redirect }           from 'next/navigation'
 import { getStaffSession }    from '@/lib/auth/staff'
-import { createServerClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 import { WaliKelasSiswaClient } from '@/components/wali-kelas/WaliKelasSiswaClient'
 import { getTodayWIB, getLockedAfter } from '@/lib/utils/date'
 
@@ -23,7 +23,7 @@ export default async function GuruKelasSiswaPage({ params }: Props) {
   if (session.role === 'admin') redirect('/admin')
 
   const { siswaId } = await params
-  const supabase    = await createServerClient()
+  const supabase    = createServiceClient()
 
   const { data: siswa } = await supabase
     .from('siswa')
@@ -40,20 +40,22 @@ export default async function GuruKelasSiswaPage({ params }: Props) {
     .single()
 
   let namaKelas = '-'
+  let kelasId: string | null = null
   if (tahunAjaran) {
     const { data: kelasData } = await supabase
       .from('siswa_kelas')
-      .select('kelas:kelas_id ( nama_kelas )')
+      .select('kelas_id, kelas:kelas_id ( nama_kelas )')
       .eq('siswa_id', siswaId)
       .eq('tahun_ajaran_id', tahunAjaran.id)
       .single()
     namaKelas = (kelasData?.kelas as any)?.nama_kelas ?? '-'
+    kelasId = kelasData?.kelas_id ?? null
   }
 
   const tanggal = getTodayWIB()
 
   // Fetch items with parent_id
-  const { data: items } = tahunAjaran
+  let { data: items } = tahunAjaran
     ? await supabase
         .from('mutabaah_item')
         .select('id, nama_item, urutan, parent_id')
@@ -61,6 +63,26 @@ export default async function GuruKelasSiswaPage({ params }: Props) {
         .eq('is_active', true)
         .order('urutan', { ascending: true })
     : { data: [] }
+
+  // Filter by kelas mutabaah items if set
+  if (kelasId && items) {
+    const { data: kelasItems } = await supabase
+      .from('kelas_mutabaah_item')
+      .select('mutabaah_item_id')
+      .eq('kelas_id', kelasId)
+
+    if (kelasItems && kelasItems.length > 0) {
+      const activeSet = new Set(kelasItems.map(k => k.mutabaah_item_id))
+      const keepIds = new Set<string>()
+      for (const i of items) {
+        if (activeSet.has(i.id)) {
+          keepIds.add(i.id)
+          if (i.parent_id) keepIds.add(i.parent_id)
+        }
+      }
+      items = items.filter(i => keepIds.has(i.id))
+    }
+  }
 
   const { data: logs } = await supabase
     .from('mutabaah_log')
