@@ -43,7 +43,6 @@ export default async function DashboardPage() {
       .order('urutan', { ascending: true })
 
     if (itemsError && itemsError.message?.includes('parent_id')) {
-      // Fallback: tanpa parent_id
       const { data: fallbackItems } = await supabase
         .from('mutabaah_item')
         .select('id, nama_item, urutan')
@@ -53,6 +52,33 @@ export default async function DashboardPage() {
       items = (fallbackItems ?? []).map(i => ({ ...i, parent_id: null }))
     } else {
       items = itemsData ?? []
+    }
+
+    // Filter by kelas items (guru pilih item yang berlaku)
+    const { data: siswaKelas } = await supabase
+      .from('siswa_kelas')
+      .select('kelas_id')
+      .eq('siswa_id', session.siswaId)
+      .eq('tahun_ajaran_id', tahunAjaran.id)
+      .maybeSingle()
+
+    if (siswaKelas?.kelas_id) {
+      const { data: kelasItems } = await supabase
+        .from('kelas_mutabaah_item')
+        .select('mutabaah_item_id')
+        .eq('kelas_id', siswaKelas.kelas_id)
+
+      if (kelasItems && kelasItems.length > 0) {
+        const activeSet = new Set(kelasItems.map(k => k.mutabaah_item_id))
+        const keepIds = new Set<string>()
+        for (const i of items) {
+          if (activeSet.has(i.id)) {
+            keepIds.add(i.id)
+            if (i.parent_id) keepIds.add(i.parent_id)
+          }
+        }
+        items = items.filter(i => keepIds.has(i.id))
+      }
     }
 
     // Fetch log hari ini

@@ -76,12 +76,30 @@ export async function GET(request: NextRequest) {
     const aktivSiswa = (siswaKelas ?? []).filter((r: any) => r.siswa?.is_active)
     const siswaIds   = aktivSiswa.map((r: any) => r.siswa.id as string)
 
-    // Ambil semua item untuk hitung leaf items only
-    const { data: allItems } = await supabase
+    // Ambil item — filter by kelas_mutabaah_item jika ada
+    let { data: allItems } = await supabase
       .from('mutabaah_item')
       .select('id, parent_id')
       .eq('tahun_ajaran_id', tahunAjaran.id)
       .eq('is_active', true)
+
+    // Filter by kelas items (union of all matched kelas)
+    const { data: kelasItems } = await supabase
+      .from('kelas_mutabaah_item')
+      .select('mutabaah_item_id')
+      .in('kelas_id', kelasIds)
+
+    if (kelasItems && kelasItems.length > 0 && allItems) {
+      const activeSet = new Set(kelasItems.map(k => k.mutabaah_item_id))
+      const keepIds = new Set<string>()
+      for (const i of allItems) {
+        if (activeSet.has(i.id)) {
+          keepIds.add(i.id)
+          if (i.parent_id) keepIds.add(i.parent_id)
+        }
+      }
+      allItems = allItems.filter(i => keepIds.has(i.id))
+    }
 
     // Leaf items = items whose id is NOT referenced as parent_id by any other item
     const itemList  = allItems ?? []
