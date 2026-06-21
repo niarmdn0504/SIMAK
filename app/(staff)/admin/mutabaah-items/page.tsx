@@ -89,6 +89,7 @@ export default function AdminMutabaahItemsPage() {
   }
 
   function openSubForm(parentId: string, parentNama: string) {
+    console.log('[DEBUG openSubForm] parentId:', parentId, 'parentNama:', parentNama)
     setFormNama('')
     setSubParentId(parentId)
     setSubParentNama(parentNama)
@@ -148,9 +149,14 @@ export default function AdminMutabaahItemsPage() {
     if (!formNama.trim() || !selectedTahun) return
     setFormLoad(true)
 
+    console.log('[DEBUG handleSubmitSub] subParentId:', subParentId, 'formNama:', formNama, 'selectedTahun:', selectedTahun)
+
+    const payload = { namaItem: formNama, tahunAjaranId: selectedTahun, parentId: subParentId || null }
+    console.log('[DEBUG handleSubmitSub] payload:', JSON.stringify(payload))
+
     const res = await fetch('/api/admin/mutabaah-items', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ namaItem: formNama, tahunAjaranId: selectedTahun, parentId: subParentId || null }),
+      body: JSON.stringify(payload),
     })
     if (res.ok) {
       showToast('Sub item ditambahkan', 'success')

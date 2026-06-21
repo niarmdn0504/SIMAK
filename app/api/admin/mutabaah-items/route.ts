@@ -60,6 +60,8 @@ export async function POST(request: NextRequest) {
     const body     = await request.json()
     const { namaItem, tahunAjaranId, parentId } = body
 
+    console.log('[DEBUG POST mutabaah-items] parentId:', parentId, 'typeof:', typeof parentId, 'namaItem:', namaItem)
+
     if (!namaItem?.trim() || !tahunAjaranId) {
       return NextResponse.json({ error: 'Nama item dan tahun ajaran wajib diisi' }, { status: 400 })
     }
