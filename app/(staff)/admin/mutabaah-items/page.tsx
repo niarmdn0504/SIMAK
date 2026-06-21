@@ -41,6 +41,7 @@ export default function AdminMutabaahItemsPage() {
   const [subItems,   setSubItems]   = useState<string[]>([''])
   const [formLoad,   setFormLoad]   = useState(false)
   const [confirmDel, setConfirmDel] = useState<string | null>(null)
+  const [confirmHapus, setConfirmHapus] = useState<string | null>(null)
   const { showToast, ToastComponent } = useToast()
 
   async function fetchData() {
@@ -168,6 +169,12 @@ export default function AdminMutabaahItemsPage() {
     else showToast('Gagal', 'error')
   }
 
+  async function handleHapus(id: string) {
+    const res = await fetch(`/api/admin/mutabaah-items/${id}?permanent=true`, { method: 'DELETE' })
+    if (res.ok) { showToast('Item dihapus permanen', 'success'); setConfirmHapus(null); fetchData() }
+    else { const d = await res.json(); showToast(d.error ?? 'Gagal', 'error') }
+  }
+
   return (
     <div className="min-h-screen bg-neutral-50">
       <div className="bg-white border-b border-neutral-100 px-4 py-4 sticky top-14 md:top-0 z-30">
@@ -247,8 +254,8 @@ export default function AdminMutabaahItemsPage() {
                             <button onClick={() => openEditForm(child)} className="text-xs text-neutral-400 hover:text-blue-600 font-semibold px-2 py-1 rounded hover:bg-blue-50 transition-colors">
                               Edit
                             </button>
-                            <button onClick={() => setConfirmDel(child.id)} className="text-xs text-neutral-400 hover:text-amber-600 font-semibold px-2 py-1 rounded hover:bg-amber-50 transition-colors">
-                              Arsipkan
+                            <button onClick={() => setConfirmHapus(child.id)} className="text-xs text-neutral-400 hover:text-danger font-semibold px-2 py-1 rounded hover:bg-red-50 transition-colors">
+                              Hapus
                             </button>
                           </div>
                         </div>
@@ -282,6 +289,12 @@ export default function AdminMutabaahItemsPage() {
                       className="h-8 px-3 border border-neutral-200 bg-white hover:border-amber-200 hover:bg-amber-50 text-amber-600 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
                     >
                       Arsipkan
+                    </button>
+                    <button
+                      onClick={() => setConfirmHapus(group.id)}
+                      className="h-8 px-3 border border-neutral-200 bg-white hover:border-red-200 hover:bg-red-50 text-danger text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
+                    >
+                      Hapus
                     </button>
                   </div>
                 </div>
@@ -429,6 +442,25 @@ export default function AdminMutabaahItemsPage() {
             <div className="flex gap-3">
               <button onClick={() => setConfirmDel(null)} className="flex-1 h-11 border border-neutral-200 rounded-lg text-sm font-semibold text-neutral-600">Batal</button>
               <button onClick={() => handleDelete(confirmDel)} className="flex-1 h-11 bg-amber-500 text-white rounded-lg text-sm font-semibold hover:bg-amber-600">Arsipkan</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Hapus Permanent Modal */}
+      {confirmHapus && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-xl p-4">
+            <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-3">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E74C3C" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </div>
+            <h3 className="font-bold text-neutral-800 text-center mb-2">Hapus Item?</h3>
+            <p className="text-sm text-neutral-500 text-center mb-4">
+              Item akan dihapus permanen beserta seluruh data histori mutabaah terkait. Tindakan ini tidak dapat dibatalkan.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setConfirmHapus(null)} className="flex-1 h-11 border border-neutral-200 rounded-lg text-sm font-semibold text-neutral-600">Batal</button>
+              <button onClick={() => handleHapus(confirmHapus)} className="flex-1 h-11 bg-danger text-white rounded-lg text-sm font-semibold hover:bg-red-700">Hapus</button>
             </div>
           </div>
         </div>

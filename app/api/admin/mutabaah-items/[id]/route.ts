@@ -33,13 +33,41 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: Params) {
+export async function DELETE(request: NextRequest, { params }: Params) {
   try {
     await requireRole(['admin'])
     const supabase = await createServerClient()
     const { id }   = await params
+    const { searchParams } = new URL(request.url)
+    const permanent = searchParams.get('permanent') === 'true'
 
-    // Soft delete — preservasi riwayat mutabaah_log
+    if (permanent) {
+      // Ambil semua anak (sub item)
+      const { data: children } = await supabase
+        .from('mutabaah_item').select('id').eq('parent_id', id)
+      const childIds = children?.map(c => c.id) || []
+      const allIds   = [id, ...childIds]
+
+      // Hapus log terkait
+      const { error: logErr } = await supabase
+        .from('mutabaah_log').delete().in('mutabaah_item_id', allIds)
+      if (logErr) throw logErr
+
+      // Hapus sub item
+      if (childIds.length > 0) {
+        const { error: childErr } = await supabase
+          .from('mutabaah_item').delete().in('id', childIds)
+        if (childErr) throw childErr
+      }
+
+      // Hapus item utama
+      const { error } = await supabase
+        .from('mutabaah_item').delete().eq('id', id)
+      if (error) throw error
+      return NextResponse.json({ success: true })
+    }
+
+    // Soft delete — arsipkan, preservasi riwayat
     const { error } = await supabase
       .from('mutabaah_item').update({ is_active: false }).eq('id', id)
     if (error) throw error
