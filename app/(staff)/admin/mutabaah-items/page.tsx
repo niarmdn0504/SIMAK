@@ -209,13 +209,13 @@ export default function AdminMutabaahItemsPage() {
           <>
             {/* Parent items with children */}
             <div className="space-y-4">
-              {groupedItems.map((group) => (
+              {groupedItems.map((group, index) => (
                 <div key={group.id} className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
                   {/* Parent row */}
                   <div className="px-4 pt-4 pb-3 bg-gradient-to-r from-primary-50 to-white">
                     <div className="flex items-start gap-3">
                       <span className="w-8 h-8 rounded-lg bg-primary-500 text-white text-sm font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
-                        {group.urutan}
+                        {index + 1}
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-base text-primary-800">{group.nama_item}</p>
