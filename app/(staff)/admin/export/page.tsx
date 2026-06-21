@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { downloadFromUrl }     from '@/lib/utils/excel'
 import { useToast }            from '@/components/ui/Toast'
+import { Breadcrumb }          from '@/components/ui/Breadcrumb'
 import { cn }                  from '@/lib/utils/cn'
 import { getTodayWIB, formatTanggal } from '@/lib/utils/date'
 
@@ -79,6 +80,7 @@ export default function AdminExportPage() {
   return (
     <div className="min-h-screen bg-neutral-50">
       <div className="bg-white border-b border-neutral-100 px-4 py-4 sticky top-14 md:top-0 z-30">
+        <Breadcrumb />
         <h2 className="text-lg font-bold text-neutral-800">Export Data</h2>
         <p className="text-xs text-neutral-400 mt-0.5">Download data ke file Excel (.xlsx)</p>
       </div>

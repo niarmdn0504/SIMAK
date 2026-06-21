@@ -29,22 +29,46 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query
     if (error) throw error
 
-    // Tambahkan jumlah siswa per kelas
+    // Tambahkan jumlah siswa per kelas + status mutabaah/tahfiz hari ini
     const kelasIds = (data ?? []).map(k => k.id)
-    const { data: counts } = await supabase
-      .from('siswa_kelas')
-      .select('kelas_id')
-      .in('kelas_id', kelasIds)
+    const today = new Date().toISOString().split('T')[0]
 
-    const countMap = new Map<string, number>()
-    for (const row of counts ?? []) {
-      countMap.set(row.kelas_id, (countMap.get(row.kelas_id) ?? 0) + 1)
+    const [
+      { data: siswaRows },
+      { data: mutabaahRows },
+      { data: tahfizRows },
+    ] = await Promise.all([
+      supabase.from('siswa_kelas').select('kelas_id, siswa_id').in('kelas_id', kelasIds),
+      supabase.from('mutabaah_log').select('siswa_id').eq('tanggal', today),
+      supabase.from('tahfiz_log').select('siswa_id').eq('tanggal', today),
+    ])
+
+    // Group siswa by kelas
+    const siswaByKelas = new Map<string, Set<string>>()
+    for (const row of siswaRows ?? []) {
+      if (!siswaByKelas.has(row.kelas_id)) siswaByKelas.set(row.kelas_id, new Set())
+      siswaByKelas.get(row.kelas_id)!.add(row.siswa_id)
     }
 
-    const result = (data ?? []).map(k => ({
-      ...k,
-      jumlah_siswa: countMap.get(k.id) ?? 0,
-    }))
+    const mutabaahSiswaIds = new Set((mutabaahRows ?? []).map((r: any) => r.siswa_id))
+    const tahfizSiswaIds = new Set((tahfizRows ?? []).map((r: any) => r.siswa_id))
+
+    const result = (data ?? []).map(k => {
+      const siswaIds = siswaByKelas.get(k.id) ?? new Set()
+      const totalSiswa = siswaIds.size
+      let mutabaahTerisi = 0
+      let tahfizTerisi = 0
+      for (const sid of siswaIds) {
+        if (mutabaahSiswaIds.has(sid)) mutabaahTerisi++
+        if (tahfizSiswaIds.has(sid)) tahfizTerisi++
+      }
+      return {
+        ...k,
+        jumlah_siswa: totalSiswa,
+        mutabaah_hari_ini: mutabaahTerisi,
+        tahfiz_hari_ini: tahfizTerisi,
+      }
+    })
 
     return NextResponse.json(result)
   } catch (err: unknown) {

@@ -63,14 +63,45 @@ export async function GET(request: NextRequest) {
     if (tahunAktif) {
       const { data: skData } = await supabase
         .from('siswa_kelas')
-        .select('siswa_id, kelas:kelas_id(id, nama_kelas)')
+        .select('siswa_id, kelas:kelas_id(id, nama_kelas, wali_kelas:wali_kelas_id(nama))')
         .eq('tahun_ajaran_id', tahunAktif.id)
 
       const skMap = new Map(skData?.map(r => [r.siswa_id, r]) ?? [])
+
+      // Get mutabaah/tahfiz status per kelas for today
+      const today = new Date().toISOString().split('T')[0]
+      const kelasIds = [...new Set((skData ?? []).map((r: any) => r.kelas?.id).filter(Boolean))]
+
+      const [
+        { data: mutabaahRows },
+        { data: tahfizRows },
+      ] = await Promise.all([
+        supabase.from('mutabaah_log').select('siswa_id').eq('tanggal', today),
+        supabase.from('tahfiz_log').select('siswa_id').eq('tanggal', today),
+      ])
+
+      const mutabaahSiswaIds = new Set((mutabaahRows ?? []).map((r: any) => r.siswa_id))
+      const tahfizSiswaIds = new Set((tahfizRows ?? []).map((r: any) => r.siswa_id))
+
+      // Group siswa by kelas for counts
+      const siswaByKelas = new Map<string, { total: number; mutabaah: number; tahfiz: number; waliKelas: string | null }>()
+      for (const r of skData ?? []) {
+        const kelasId = (r.kelas as any)?.id
+        if (!kelasId) continue
+        if (!siswaByKelas.has(kelasId)) {
+          siswaByKelas.set(kelasId, { total: 0, mutabaah: 0, tahfiz: 0, waliKelas: (r.kelas as any)?.wali_kelas?.nama ?? null })
+        }
+        const stats = siswaByKelas.get(kelasId)!
+        stats.total++
+        if (mutabaahSiswaIds.has(r.siswa_id)) stats.mutabaah++
+        if (tahfizSiswaIds.has(r.siswa_id)) stats.tahfiz++
+      }
+
       const result = (siswaList ?? []).map(s => ({
         ...s,
         kelas:    (skMap.get(s.id)?.kelas as any)?.nama_kelas ?? null,
         kelas_id: (skMap.get(s.id)?.kelas as any)?.id ?? null,
+        wali_kelas: siswaByKelas.get((skMap.get(s.id)?.kelas as any)?.id ?? '')?.waliKelas ?? null,
       }))
       return NextResponse.json(result)
     }

@@ -17,7 +17,27 @@ export async function GET() {
       .select('*')
       .order('nama', { ascending: false })
     if (error) throw error
-    return NextResponse.json(data ?? [])
+
+    // Add stats per tahun ajaran
+    const result = await Promise.all((data ?? []).map(async (t) => {
+      const [
+        { count: kelasCount },
+        { data: skData },
+        { count: guruCount },
+      ] = await Promise.all([
+        supabase.from('kelas').select('*', { count: 'exact', head: true }).eq('tahun_ajaran_id', t.id),
+        supabase.from('siswa_kelas').select('siswa_id').eq('tahun_ajaran_id', t.id),
+        supabase.from('user_profile').select('*', { count: 'exact', head: true }).eq('is_active', true),
+      ])
+      return {
+        ...t,
+        jumlah_kelas: kelasCount ?? 0,
+        jumlah_siswa: new Set((skData ?? []).map((r: any) => r.siswa_id)).size,
+        jumlah_guru: guruCount ?? 0,
+      }
+    }))
+
+    return NextResponse.json(result)
   } catch (err: unknown) {
     if (err instanceof Error && err.message === 'UNAUTHORIZED') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     if (err instanceof Error && err.message === 'FORBIDDEN')    return NextResponse.json({ error: 'Forbidden' },    { status: 403 })

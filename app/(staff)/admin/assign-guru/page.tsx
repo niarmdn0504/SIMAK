@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useToast }            from '@/components/ui/Toast'
+import { Breadcrumb }          from '@/components/ui/Breadcrumb'
 import { cn }                  from '@/lib/utils/cn'
 
 interface KelasItem {
@@ -101,6 +102,7 @@ export default function AssignGuruPage() {
 
   return (
     <div className="p-4 md:p-6 max-w-3xl mx-auto">
+      <Breadcrumb />
       <h1 className="text-xl font-bold text-neutral-800 mb-1">Penugasan Guru</h1>
       <p className="text-xs text-neutral-400 mb-4">Tentukan guru yang bertanggung jawab untuk tiap kelas</p>
 
@@ -108,8 +110,13 @@ export default function AssignGuruPage() {
       <div className="bg-white rounded-xl shadow-card border border-neutral-100 p-4 mb-4">
         <div className="flex items-center justify-between mb-3">
           <p className="text-sm font-semibold text-neutral-700">Ringkasan Penugasan</p>
-          <span className={cn('text-xs font-bold px-2.5 py-1 rounded-full', isLengkap ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700')}>
-            {isLengkap ? '✅ Lengkap' : '⚠️ Belum Lengkap'}
+          <span className={cn('text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5', isLengkap ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700')}>
+            {isLengkap ? (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+            )}
+            {isLengkap ? 'Lengkap' : 'Belum Lengkap'}
           </span>
         </div>
         <div className="grid grid-cols-4 gap-3 text-center">

@@ -25,6 +25,10 @@ export default async function AdminPage() {
     { count: mutabaahHariIni },
     { count: tahfizHariIni },
     { count: wafaHariIni },
+    { data: recentMutabaah },
+    { data: recentTahfiz },
+    { data: recentWafa },
+    { data: kelasList },
   ] = await Promise.all([
     supabase.from('siswa').select('*', { count: 'exact', head: true }).eq('is_active', true),
     supabase.from('user_profile').select('*', { count: 'exact', head: true }).eq('is_active', true),
@@ -33,6 +37,10 @@ export default async function AdminPage() {
     supabase.from('mutabaah_log').select('*', { count: 'exact', head: true }).eq('tanggal', today),
     supabase.from('tahfiz_log').select('*', { count: 'exact', head: true }).eq('tanggal', today),
     supabase.from('wafa_log').select('*', { count: 'exact', head: true }).eq('tanggal', today),
+    supabase.from('mutabaah_log').select('id, created_at, siswa:siswa_id(nama_lengkap)').order('created_at', { ascending: false }).limit(5),
+    supabase.from('tahfiz_log').select('id, created_at, siswa:siswa_id(nama_lengkap)').order('created_at', { ascending: false }).limit(5),
+    supabase.from('wafa_log').select('id, created_at, siswa:siswa_id(nama_lengkap)').order('created_at', { ascending: false }).limit(5),
+    supabase.from('kelas').select('id, nama_kelas'),
   ])
 
   return (
@@ -47,6 +55,12 @@ export default async function AdminPage() {
         wafaHariIni:    wafaHariIni ?? 0,
         totalSiswaAktif: totalSiswa ?? 0,
       }}
+      recentActivity={{
+        mutabaah: (recentMutabaah ?? []).map((m: any) => ({ id: m.id, time: m.created_at, nama: m.siswa?.nama_lengkap ?? '-' })),
+        tahfiz: (recentTahfiz ?? []).map((t: any) => ({ id: t.id, time: t.created_at, nama: t.siswa?.nama_lengkap ?? '-' })),
+        wafa: (recentWafa ?? []).map((w: any) => ({ id: w.id, time: w.created_at, nama: w.siswa?.nama_lengkap ?? '-' })),
+      }}
+      kelasList={(kelasList ?? []).map((k: any) => ({ id: k.id, nama: k.nama_kelas }))}
       adminNama={session.nama}
     />
   )

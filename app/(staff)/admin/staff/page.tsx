@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useToast }            from '@/components/ui/Toast'
+import { Breadcrumb }          from '@/components/ui/Breadcrumb'
 import { cn }                  from '@/lib/utils/cn'
 
 interface StaffRow {
@@ -22,9 +23,9 @@ const ROLE_LABEL: Record<string, string> = {
 }
 
 const ROLE_COLOR: Record<string, string> = {
-  admin:       'bg-purple-100 text-purple-700',
-  wali_kelas:  'bg-blue-100 text-blue-700',
-  guru_tahfiz: 'bg-green-100 text-green-700',
+  admin:       'bg-blue-100 text-blue-700',
+  wali_kelas:  'bg-green-100 text-green-700',
+  guru_tahfiz: 'bg-emerald-100 text-emerald-700',
   guru_wafa:   'bg-amber-100 text-amber-700',
 }
 
@@ -111,6 +112,7 @@ export default function AdminStaffPage() {
   return (
     <div className="min-h-screen bg-neutral-50">
       <div className="bg-white border-b border-neutral-100 px-4 py-4 sticky top-14 md:top-0 z-30">
+        <Breadcrumb />
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-neutral-800">Kelola Guru</h2>

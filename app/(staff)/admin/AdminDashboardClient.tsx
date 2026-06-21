@@ -14,7 +14,28 @@ interface Stats {
   totalSiswaAktif: number
 }
 
-export function AdminDashboardClient({ stats }: { stats: Stats; adminNama: string }) {
+interface ActivityItem {
+  id: string
+  time: string
+  nama: string
+}
+
+interface KelasItem {
+  id: string
+  nama: string
+}
+
+export function AdminDashboardClient({
+  stats,
+  recentActivity,
+  kelasList,
+  adminNama,
+}: {
+  stats: Stats
+  recentActivity: { mutabaah: ActivityItem[]; tahfiz: ActivityItem[]; wafa: ActivityItem[] }
+  kelasList: KelasItem[]
+  adminNama: string
+}) {
   const mutabaahRate = stats.totalSiswaAktif > 0
     ? Math.round((stats.mutabaahHariIni / stats.totalSiswaAktif) * 100)
     : 0
@@ -46,7 +67,7 @@ export function AdminDashboardClient({ stats }: { stats: Stats; adminNama: strin
             value={stats.totalKelas}
             label="Kelas"
             icon={<IconKelas />}
-            color="from-purple-500 to-purple-600"
+            color="from-green-500 to-green-600"
           />
           <StatCard
             value={stats.totalStaff}
@@ -116,13 +137,76 @@ export function AdminDashboardClient({ stats }: { stats: Stats; adminNama: strin
         <h2 className="text-sm font-semibold text-neutral-500 mb-3">Akses Cepat</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <QuickAction href="/admin/siswa"            label="Kelola Siswa"    color="bg-gradient-to-br from-blue-50 to-blue-100 text-blue-700 border-blue-200" icon={<IconUsers />} />
-          <QuickAction href="/admin/staff"            label="Kelola Guru"     color="bg-gradient-to-br from-purple-50 to-purple-100 text-purple-700 border-purple-200" icon={<IconStaff />} />
+          <QuickAction href="/admin/staff"            label="Kelola Guru"     color="bg-gradient-to-br from-green-50 to-green-100 text-green-700 border-green-200" icon={<IconStaff />} />
           <QuickAction href="/admin/mutabaah-items"   label="Item Mutabaah"   color="bg-gradient-to-br from-amber-50 to-amber-100 text-amber-700 border-amber-200" icon={<IconCheck />} />
-          <QuickAction href="/admin/tahun-ajaran"     label="Tahun Ajaran"    color="bg-gradient-to-br from-indigo-50 to-indigo-100 text-indigo-700 border-indigo-200" icon={<IconCalendar />} />
-          <QuickAction href="/admin/assign-guru"      label="Penugasan Guru"  color="bg-gradient-to-br from-teal-50 to-teal-100 text-teal-700 border-teal-200" icon={<IconAssign />} />
-          <QuickAction href="/admin/kenaikan-kelas"   label="Kenaikan Kelas"  color="bg-gradient-to-br from-pink-50 to-pink-100 text-pink-700 border-pink-200" icon={<IconTrendUp />} />
+          <QuickAction href="/admin/tahun-ajaran"     label="Tahun Ajaran"    color="bg-gradient-to-br from-blue-50 to-blue-100 text-blue-700 border-blue-200" icon={<IconCalendar />} />
+          <QuickAction href="/admin/assign-guru"      label="Penugasan Guru"  color="bg-gradient-to-br from-green-50 to-green-100 text-green-700 border-green-200" icon={<IconAssign />} />
+          <QuickAction href="/admin/kenaikan-kelas"   label="Kenaikan Kelas"  color="bg-gradient-to-br from-amber-50 to-amber-100 text-amber-700 border-amber-200" icon={<IconTrendUp />} />
           <QuickAction href="/admin/export"           label="Export Data"     color="bg-gradient-to-br from-orange-50 to-orange-100 text-orange-700 border-orange-200" icon={<IconDownload />} />
-          <QuickAction href="/admin/siswa?import=1"   label="Import Data"     color="bg-gradient-to-br from-cyan-50 to-cyan-100 text-cyan-700 border-cyan-200" icon={<IconUpload />} />
+          <QuickAction href="/admin/siswa?import=1"   label="Import Data"     color="bg-gradient-to-br from-blue-50 to-blue-100 text-blue-700 border-blue-200" icon={<IconUpload />} />
+        </div>
+      </div>
+
+      {/* Aktivitas Terbaru */}
+      <div>
+        <h2 className="text-sm font-semibold text-neutral-500 mb-3">Aktivitas Terbaru</h2>
+        <div className="bg-white rounded-xl shadow-card border border-neutral-100 divide-y divide-neutral-100">
+          {recentActivity.mutabaah.length === 0 && recentActivity.tahfiz.length === 0 && recentActivity.wafa.length === 0 ? (
+            <div className="px-4 py-6 text-center">
+              <p className="text-xs text-neutral-400">Belum ada aktivitas hari ini</p>
+            </div>
+          ) : (
+            [...recentActivity.mutabaah.map(a => ({ ...a, type: 'mutabaah' as const })),
+             ...recentActivity.tahfiz.map(a => ({ ...a, type: 'tahfiz' as const })),
+             ...recentActivity.wafa.map(a => ({ ...a, type: 'wafa' as const }))]
+              .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+              .slice(0, 8)
+              .map((a, i) => (
+                <div key={`${a.type}-${a.id}`} className="flex items-center gap-3 px-4 py-3">
+                  <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0',
+                    a.type === 'mutabaah' ? 'bg-green-50' : a.type === 'tahfiz' ? 'bg-emerald-50' : 'bg-amber-50'
+                  )}>
+                    {a.type === 'mutabaah' ? <IconCheck className="text-green-600 w-4 h-4" /> :
+                     a.type === 'tahfiz' ? <IconBook className="text-emerald-600 w-4 h-4" /> :
+                     <IconStar className="text-amber-600 w-4 h-4" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-neutral-800 truncate">
+                      <span className="font-semibold">{a.nama}</span>
+                      <span className="text-neutral-400 ml-1">
+                        {a.type === 'mutabaah' ? 'mengisi mutabaah' : a.type === 'tahfiz' ? 'setor tahfizh' : 'update wafa'}
+                      </span>
+                    </p>
+                  </div>
+                  <span className="text-[11px] text-neutral-400 flex-shrink-0">
+                    {new Date(a.time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              ))
+          )}
+        </div>
+      </div>
+
+      {/* Ringkasan Per Kelas */}
+      <div>
+        <h2 className="text-sm font-semibold text-neutral-500 mb-3">Ringkasan Per Kelas</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {kelasList.map((k, i) => (
+            <Link
+              key={k.id}
+              href="/admin/kelas"
+              className={cn(
+                'bg-white rounded-xl p-4 shadow-card border border-neutral-100 hover:shadow-md transition-shadow animate-in',
+              )}
+              style={{ animationDelay: `${i * 0.04}s` }}
+            >
+              <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center mb-3">
+                <span className="text-primary-700 font-bold text-sm">{k.nama}</span>
+              </div>
+              <p className="font-semibold text-sm text-neutral-800">Kelas {k.nama}</p>
+              <p className="text-[11px] text-neutral-400 mt-0.5">Lihat detail →</p>
+            </Link>
+          ))}
         </div>
       </div>
     </div>

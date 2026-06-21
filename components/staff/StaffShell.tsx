@@ -5,6 +5,7 @@ import Link                                    from 'next/link'
 import { useRouter, usePathname }              from 'next/navigation'
 import { createClient }                        from '@/lib/supabase/client'
 import { cn }                                  from '@/lib/utils/cn'
+import { GlobalSearch }                        from '@/components/ui/GlobalSearch'
 import type { StaffRole }                      from '@/lib/types/app'
 
 const ROLE_LABEL: Record<StaffRole, string> = {
@@ -15,9 +16,9 @@ const ROLE_LABEL: Record<StaffRole, string> = {
 }
 
 const ROLE_COLOR: Record<StaffRole, string> = {
-  admin:       'bg-purple-100 text-purple-700',
-  wali_kelas:  'bg-blue-100 text-blue-700',
-  guru_tahfiz: 'bg-green-100 text-green-700',
+  admin:       'bg-blue-100 text-blue-700',
+  wali_kelas:  'bg-green-100 text-green-700',
+  guru_tahfiz: 'bg-emerald-100 text-emerald-700',
   guru_wafa:   'bg-amber-100 text-amber-700',
 }
 
@@ -154,6 +155,7 @@ export function StaffShell({
               </button>
             )}
             <span className="font-display font-bold text-lg flex-1">SIMAK</span>
+            <GlobalSearch />
             <button
               onClick={handleLogout}
               title="Keluar"
@@ -200,7 +202,7 @@ function SidebarContent({
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-display font-bold text-lg leading-tight">SIMAK</p>
-          <p className="text-primary-300 text-[10px] leading-tight">SDIT Al-Kautsar Muko-muko</p>
+          <p className="text-primary-300 text-[10px] leading-tight">SDIT Al-Kautsar Mukomuko</p>
         </div>
         {onClose && (
           <button
@@ -223,15 +225,18 @@ function SidebarContent({
       </div>
 
       {/* Menu Groups */}
-      <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-4">
-        {MENU_GROUPS.map((group) => {
+      <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
+        {MENU_GROUPS.map((group, groupIdx) => {
           const visibleItems = group.items.filter(item => !item.roles || item.roles.includes(role))
           if (visibleItems.length === 0) return null
           if (group.roles && !group.roles.includes(role)) return null
 
           return (
             <div key={group.title}>
-              <p className="px-3 text-[10px] font-bold text-primary-400 uppercase tracking-widest mb-1.5">
+              {groupIdx > 0 && (
+                <div className="border-t border-primary-700/50 my-2" />
+              )}
+              <p className="px-3 pt-1 pb-1 text-[10px] font-bold text-primary-400 uppercase tracking-widest">
                 {group.title}
               </p>
               <div className="space-y-0.5">

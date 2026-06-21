@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useToast }            from '@/components/ui/Toast'
+import { Breadcrumb }          from '@/components/ui/Breadcrumb'
 import { cn }                  from '@/lib/utils/cn'
 
 interface ItemRow {
@@ -148,6 +149,7 @@ export default function AdminMutabaahItemsPage() {
   return (
     <div className="min-h-screen bg-neutral-50">
       <div className="bg-white border-b border-neutral-100 px-4 py-4 sticky top-14 md:top-0 z-30">
+        <Breadcrumb />
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-bold text-neutral-800">Item Mutabaah</h2>
           <button onClick={() => openAddForm()} className="h-9 px-3 bg-primary-500 text-white text-xs font-semibold rounded-lg">+ Tambah</button>

@@ -5,6 +5,7 @@ import { useSearchParams }      from 'next/navigation'
 import { useToast }             from '@/components/ui/Toast'
 import { ImportExcelModal }     from '@/components/admin/ImportExcelModal'
 import { SiswaFormModal }       from '@/components/admin/SiswaFormModal'
+import { Breadcrumb }           from '@/components/ui/Breadcrumb'
 import { cn }                   from '@/lib/utils/cn'
 
 interface SiswaRow {
@@ -16,6 +17,7 @@ interface SiswaRow {
   kelas:        string | null
   kelas_id:     string | null
   is_active:    boolean
+  wali_kelas:   string | null
 }
 
 interface KelasGroup {
@@ -67,7 +69,7 @@ export default function AdminSiswaPage() {
     const groups: KelasGroup[] = []
     for (const [nama, siswa] of map) {
       const kelasId = siswa.find(s => s.kelas_id)?.kelas_id ?? null
-      groups.push({ nama, kelasId, siswa, waliKelas: null })
+      groups.push({ nama, kelasId, siswa, waliKelas: siswa.find(s => s.wali_kelas)?.wali_kelas ?? null })
     }
     groups.sort((a, b) => a.nama.localeCompare(b.nama, undefined, { numeric: true }))
     return groups
@@ -124,8 +126,8 @@ export default function AdminSiswaPage() {
   }
 
   const CLASS_COLORS: Record<string, string> = {
-    '1': 'bg-blue-500', '2': 'bg-green-500', '3': 'bg-purple-500',
-    '4': 'bg-amber-500', '5': 'bg-pink-500', '6': 'bg-indigo-500',
+    '1': 'bg-blue-500', '2': 'bg-green-500', '3': 'bg-emerald-500',
+    '4': 'bg-amber-500', '5': 'bg-orange-500', '6': 'bg-teal-500',
   }
 
   function getClassColor(nama: string) {
@@ -137,6 +139,7 @@ export default function AdminSiswaPage() {
     <div className="min-h-screen bg-neutral-50">
       {/* Header */}
       <div className="bg-white border-b border-neutral-100 px-4 py-4 sticky top-14 md:top-0 z-30">
+        <Breadcrumb />
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-bold text-neutral-800">Kelola Siswa</h2>
           <div className="flex gap-2">
@@ -230,7 +233,7 @@ export default function AdminSiswaPage() {
                     </div>
                     <div className="flex-1 text-left">
                       <p className="font-bold text-sm text-neutral-800">Kelas {group.nama}</p>
-                      <p className="text-xs text-neutral-400">{activeSiswa.length} siswa aktif</p>
+                      <p className="text-xs text-neutral-400">{activeSiswa.length} siswa aktif{group.waliKelas ? ` · ${group.waliKelas}` : ''}</p>
                     </div>
                     <svg
                       width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"

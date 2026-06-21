@@ -7,12 +7,16 @@
 
 import { useState, useEffect } from 'react'
 import { useToast }            from '@/components/ui/Toast'
+import { Breadcrumb }          from '@/components/ui/Breadcrumb'
 import { cn }                  from '@/lib/utils/cn'
 
 interface TahunRow {
-  id:        string
-  nama:      string
-  is_active: boolean
+  id:            string
+  nama:          string
+  is_active:     boolean
+  jumlah_kelas:  number
+  jumlah_siswa:  number
+  jumlah_guru:   number
 }
 
 export default function AdminTahunAjaranPage() {
@@ -60,6 +64,7 @@ export default function AdminTahunAjaranPage() {
   return (
     <div className="min-h-screen bg-neutral-50">
       <div className="bg-white border-b border-neutral-100 px-4 py-4 sticky top-14 md:top-0 z-30">
+        <Breadcrumb />
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-neutral-800">Tahun Ajaran</h2>
           <button onClick={() => setShowForm(true)} className="h-9 px-3 bg-primary-500 text-white text-xs font-semibold rounded-lg">+ Tambah</button>
@@ -109,6 +114,11 @@ export default function AdminTahunAjaranPage() {
                       {t.is_active && (
                         <span className="text-[10px] bg-primary-500 text-white px-2 py-0.5 rounded-full font-semibold">Aktif</span>
                       )}
+                    </div>
+                    <div className="flex gap-3 mt-1">
+                      <span className="text-[11px] text-neutral-500">{t.jumlah_kelas} kelas</span>
+                      <span className="text-[11px] text-neutral-500">{t.jumlah_siswa} siswa</span>
+                      <span className="text-[11px] text-neutral-500">{t.jumlah_guru} guru</span>
                     </div>
                   </div>
                   {!t.is_active && (

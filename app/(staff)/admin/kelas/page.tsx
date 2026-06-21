@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react'
 import { useToast }            from '@/components/ui/Toast'
+import { Breadcrumb }          from '@/components/ui/Breadcrumb'
 import { cn }                  from '@/lib/utils/cn'
 
 interface KelasRow {
@@ -16,6 +17,8 @@ interface KelasRow {
   tahun_ajaran:   { nama: string }
   wali_kelas:     { id: string; nama: string } | null
   jumlah_siswa:   number
+  mutabaah_hari_ini: number
+  tahfiz_hari_ini:   number
 }
 
 interface TahunItem { id: string; nama: string; is_active: boolean }
@@ -110,6 +113,7 @@ export default function AdminKelasPage() {
   return (
     <div className="min-h-screen bg-neutral-50">
       <div className="bg-white border-b border-neutral-100 px-4 py-4 sticky top-14 md:top-0 z-30">
+        <Breadcrumb />
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-bold text-neutral-800">Kelola Kelas</h2>
           <button onClick={openAddForm} className="h-9 px-3 bg-primary-500 text-white text-xs font-semibold rounded-lg">+ Tambah</button>
@@ -161,6 +165,14 @@ export default function AdminKelasPage() {
                     <p className="text-xs text-neutral-400">
                       {kelas.jumlah_siswa} siswa · {kelas.wali_kelas?.nama ?? 'Belum ada wali kelas'}
                     </p>
+                    <div className="flex gap-3 mt-1.5">
+                      <span className="text-[11px] text-green-600 font-medium">
+                        Mutabaah {kelas.mutabaah_hari_ini}/{kelas.jumlah_siswa}
+                      </span>
+                      <span className="text-[11px] text-emerald-600 font-medium">
+                        Tahfizh {kelas.tahfiz_hari_ini}/{kelas.jumlah_siswa}
+                      </span>
+                    </div>
                   </div>
                   <div className="flex gap-1">
                     <button onClick={() => openEditForm(kelas)} className="w-8 h-8 flex items-center justify-center rounded-lg text-neutral-400 hover:text-primary-500 hover:bg-primary-50">

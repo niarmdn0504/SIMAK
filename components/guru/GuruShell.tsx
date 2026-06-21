@@ -5,6 +5,7 @@ import Link                                    from 'next/link'
 import { useRouter, usePathname }              from 'next/navigation'
 import { createClient }                        from '@/lib/supabase/client'
 import { cn }                                  from '@/lib/utils/cn'
+import { GlobalSearch }                        from '@/components/ui/GlobalSearch'
 
 const MENU_GROUPS = [
   {
@@ -103,6 +104,7 @@ export function GuruShell({
               </button>
             )}
             <span className="font-display font-bold text-lg flex-1">SIMAK</span>
+            <GlobalSearch />
             <button
               onClick={handleLogout}
               title="Keluar"
@@ -147,7 +149,7 @@ function SidebarContent({
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-display font-bold text-lg leading-tight">SIMAK</p>
-          <p className="text-primary-300 text-[10px] leading-tight">SDIT Al-Kautsar Muko-muko</p>
+          <p className="text-primary-300 text-[10px] leading-tight">SDIT Al-Kautsar Mukomuko</p>
         </div>
         {onClose && (
           <button
@@ -163,10 +165,13 @@ function SidebarContent({
       </div>
 
       {/* Menu Groups */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
-        {MENU_GROUPS.map((group) => (
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        {MENU_GROUPS.map((group, groupIdx) => (
           <div key={group.title}>
-            <p className="px-3 text-[10px] font-bold text-primary-400 uppercase tracking-widest mb-1.5">
+            {groupIdx > 0 && (
+              <div className="border-t border-primary-700/50 my-2" />
+            )}
+            <p className="px-3 pt-1 pb-1 text-[10px] font-bold text-primary-400 uppercase tracking-widest">
               {group.title}
             </p>
             <div className="space-y-0.5">
