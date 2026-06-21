@@ -150,7 +150,7 @@ export default function AdminMutabaahItemsPage() {
 
     const res = await fetch('/api/admin/mutabaah-items', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ namaItem: formNama, tahunAjaranId: selectedTahun, parentId: subParentId }),
+      body: JSON.stringify({ namaItem: formNama, tahunAjaranId: selectedTahun, parentId: subParentId || null }),
     })
     if (res.ok) {
       showToast('Sub item ditambahkan', 'success')
