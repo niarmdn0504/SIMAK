@@ -12,6 +12,7 @@ interface ItemRow {
   urutan:          number
   is_active:       boolean
   tahun_ajaran_id: string
+  jumlah_kelas:    number
 }
 
 interface TahunItem { id: string; nama: string; is_active: boolean }
@@ -151,7 +152,7 @@ export default function AdminMutabaahItemsPage() {
       <div className="bg-white border-b border-neutral-100 px-4 py-4 sticky top-14 md:top-0 z-30">
         <Breadcrumb />
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-bold text-neutral-800">Item Mutabaah</h2>
+          <h2 className="text-lg font-bold text-neutral-800">Template Mutabaah</h2>
           <button onClick={() => openAddForm()} className="h-9 px-3 bg-primary-500 text-white text-xs font-semibold rounded-lg">+ Tambah</button>
         </div>
         <select value={selectedTahun} onChange={e => setSelectedTahun(e.target.value)} className="w-full h-9 px-3 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-300">
@@ -179,51 +180,78 @@ export default function AdminMutabaahItemsPage() {
         ) : (
           <>
             {/* Parent items with children */}
-            <div className="space-y-3">
-              <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">Item Utama ({groupedItems.length})</p>
+            <div className="space-y-4">
               {groupedItems.map((group) => (
                 <div key={group.id} className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
                   {/* Parent row */}
-                  <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-primary-50 to-white">
-                    <span className="w-7 h-7 rounded-lg bg-primary-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
-                      {group.urutan}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-sm text-primary-800">{group.nama_item}</p>
-                      <p className="text-[11px] text-primary-400">{group.children.length} sub-item</p>
-                    </div>
-                    <div className="flex gap-1">
-                      <button onClick={() => openAddForm(group.id)} title="Tambah sub-item" className="w-7 h-7 flex items-center justify-center rounded-lg text-primary-400 hover:text-primary-600 hover:bg-primary-50 transition-colors">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                      </button>
-                      <button onClick={() => openEditForm(group)} title="Edit" className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-400 hover:text-blue-500 hover:bg-blue-50 transition-colors">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                      </button>
-                      <button onClick={() => setConfirmDel(group.id)} title="Hapus" className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-300 hover:text-danger hover:bg-red-50 transition-colors">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M19 6l-1 14H6L5 6"/></svg>
-                      </button>
+                  <div className="px-4 py-4 bg-gradient-to-r from-primary-50 to-white border-b border-neutral-100">
+                    <div className="flex items-start gap-3">
+                      <span className="w-8 h-8 rounded-lg bg-primary-500 text-white text-sm font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                        {group.urutan}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-base text-primary-800">{group.nama_item}</p>
+                        <div className="flex items-center gap-3 mt-1.5">
+                          <span className="text-[11px] font-medium text-primary-500 bg-primary-50 px-2 py-0.5 rounded-full">
+                            {group.children.length} Sub Item
+                          </span>
+                          <span className="text-[11px] text-neutral-500">
+                            Dipakai {group.jumlah_kelas > 0 ? `${group.jumlah_kelas} Kelas` : '— Kelas'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => openAddForm(group.id)}
+                          className="h-8 px-3 bg-primary-500 hover:bg-primary-600 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                          Tambah Sub Item
+                        </button>
+                        <button
+                          onClick={() => openEditForm(group)}
+                          className="h-8 px-3 border border-neutral-200 hover:border-neutral-300 text-neutral-600 hover:text-neutral-800 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => setConfirmDel(group.id)}
+                          className="h-8 px-3 border border-neutral-200 hover:border-danger/30 text-danger text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
+                        >
+                          Arsipkan
+                        </button>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Children */}
+                  {/* Sub Items */}
                   {group.children.length > 0 && (
-                    <div className="border-t border-neutral-100">
+                    <div>
+                      <p className="px-4 pt-3 pb-1 text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
+                        Sub Item
+                      </p>
                       {group.children.map((child) => (
-                        <div key={child.id} className="flex items-center gap-3 px-4 py-2.5 border-b border-neutral-50 last:border-0 pl-10">
-                          <div className="w-5 h-5 rounded bg-primary-50 flex items-center justify-center flex-shrink-0">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="text-primary-400"><path d="M9 11l3 3L22 4"/></svg>
+                        <div key={child.id} className="flex items-center gap-3 px-4 py-2.5 border-b border-neutral-50 last:border-0">
+                          <div className="w-5 h-5 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#27AE60" strokeWidth="3" strokeLinecap="round"><path d="M9 11l3 3L22 4"/></svg>
                           </div>
                           <p className="flex-1 text-sm text-neutral-700">{child.nama_item}</p>
-                          <div className="flex gap-1">
-                            <button onClick={() => openEditForm(child)} className="w-6 h-6 flex items-center justify-center rounded text-neutral-300 hover:text-blue-500">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => openEditForm(child)} className="text-xs text-neutral-400 hover:text-blue-600 font-semibold px-2 py-1 rounded hover:bg-blue-50 transition-colors">
+                              Edit
                             </button>
-                            <button onClick={() => setConfirmDel(child.id)} className="w-6 h-6 flex items-center justify-center rounded text-neutral-300 hover:text-danger">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M19 6l-1 14H6L5 6"/></svg>
+                            <button onClick={() => setConfirmDel(child.id)} className="text-xs text-neutral-400 hover:text-danger font-semibold px-2 py-1 rounded hover:bg-red-50 transition-colors">
+                              Arsipkan
                             </button>
                           </div>
                         </div>
                       ))}
+                    </div>
+                  )}
+
+                  {group.children.length === 0 && (
+                    <div className="px-4 py-3 text-center">
+                      <p className="text-xs text-neutral-400">Belum ada sub item. Klik "+ Tambah Sub Item" untuk menambahkan.</p>
                     </div>
                   )}
                 </div>
@@ -323,15 +351,18 @@ export default function AdminMutabaahItemsPage() {
         </div>
       )}
 
-      {/* Confirm Delete Modal */}
+      {/* Confirm Archive Modal */}
       {confirmDel && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-xl p-4">
-            <h3 className="font-bold text-neutral-800 mb-2">Hapus Item?</h3>
-            <p className="text-sm text-neutral-500 mb-4">Item dan semua sub-item akan dihapus permanen.</p>
+            <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-3">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F39C12" strokeWidth="2" strokeLinecap="round"><path d="M21 4H3l1 16h16L21 4z"/><line x1="10" y1="11" x2="14" y2="11"/></svg>
+            </div>
+            <h3 className="font-bold text-neutral-800 text-center mb-2">Arsipkan Item?</h3>
+            <p className="text-sm text-neutral-500 text-center mb-4">Item akan dinonaktifkan tetapi data histori tetap tersimpan.</p>
             <div className="flex gap-3">
               <button onClick={() => setConfirmDel(null)} className="flex-1 h-11 border border-neutral-200 rounded-lg text-sm font-semibold text-neutral-600">Batal</button>
-              <button onClick={() => handleDelete(confirmDel)} className="flex-1 h-11 bg-danger text-white rounded-lg text-sm font-semibold">Hapus</button>
+              <button onClick={() => handleDelete(confirmDel)} className="flex-1 h-11 bg-amber-500 text-white rounded-lg text-sm font-semibold hover:bg-amber-600">Arsipkan</button>
             </div>
           </div>
         </div>

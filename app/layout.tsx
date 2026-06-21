@@ -23,8 +23,8 @@ const plusJakarta = Plus_Jakarta_Sans({
 })
 
 export const metadata: Metadata = {
-  title:       'SIMAK — Monitoring Akhlak & Karakter SDIT Al-Kautsar Mukomuko',
-  description: 'Aplikasi Monitoring Akhlak dan Karakter SDIT Al-Kautsar Mukomuko',
+  title:       'SIMAK — Monitoring Akhlak & Karakter SDIT Al-Kautsar Muko-Muko',
+  description: 'Aplikasi Monitoring Akhlak dan Karakter SDIT Al-Kautsar Muko-Muko',
   manifest:    '/manifest.json',
   icons: {
     icon: '/logo.png',

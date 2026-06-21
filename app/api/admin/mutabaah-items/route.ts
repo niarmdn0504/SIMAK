@@ -24,7 +24,28 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await query
     if (error) throw error
-    return NextResponse.json(data ?? [])
+
+    // Tambah jumlah kelas yang menggunakan tiap item
+    const itemIds = (data ?? []).map(i => i.id)
+    let kelasCountMap = new Map<string, number>()
+    if (itemIds.length > 0) {
+      const { data: kelasItems } = await supabase
+        .from('kelas_mutabaah_item')
+        .select('mutabaah_item_id')
+        .in('mutabaah_item_id', itemIds)
+      if (kelasItems) {
+        for (const ki of kelasItems) {
+          kelasCountMap.set(ki.mutabaah_item_id, (kelasCountMap.get(ki.mutabaah_item_id) ?? 0) + 1)
+        }
+      }
+    }
+
+    const result = (data ?? []).map(i => ({
+      ...i,
+      jumlah_kelas: kelasCountMap.get(i.id) ?? 0,
+    }))
+
+    return NextResponse.json(result)
   } catch (err: unknown) {
     if (err instanceof Error && err.message === 'UNAUTHORIZED') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     if (err instanceof Error && err.message === 'FORBIDDEN')    return NextResponse.json({ error: 'Forbidden' },    { status: 403 })

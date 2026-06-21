@@ -138,7 +138,7 @@ export function AdminDashboardClient({
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <QuickAction href="/admin/siswa"            label="Kelola Siswa"    color="bg-gradient-to-br from-blue-50 to-blue-100 text-blue-700 border-blue-200" icon={<IconUsers />} />
           <QuickAction href="/admin/staff"            label="Kelola Guru"     color="bg-gradient-to-br from-green-50 to-green-100 text-green-700 border-green-200" icon={<IconStaff />} />
-          <QuickAction href="/admin/mutabaah-items"   label="Item Mutabaah"   color="bg-gradient-to-br from-amber-50 to-amber-100 text-amber-700 border-amber-200" icon={<IconCheck />} />
+          <QuickAction href="/admin/mutabaah-items"   label="Template Mutabaah"   color="bg-gradient-to-br from-amber-50 to-amber-100 text-amber-700 border-amber-200" icon={<IconCheck />} />
           <QuickAction href="/admin/tahun-ajaran"     label="Tahun Ajaran"    color="bg-gradient-to-br from-blue-50 to-blue-100 text-blue-700 border-blue-200" icon={<IconCalendar />} />
           <QuickAction href="/admin/assign-guru"      label="Penugasan Guru"  color="bg-gradient-to-br from-green-50 to-green-100 text-green-700 border-green-200" icon={<IconAssign />} />
           <QuickAction href="/admin/kenaikan-kelas"   label="Kenaikan Kelas"  color="bg-gradient-to-br from-amber-50 to-amber-100 text-amber-700 border-amber-200" icon={<IconTrendUp />} />

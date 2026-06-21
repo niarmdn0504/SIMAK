@@ -14,7 +14,7 @@ const ROUTE_LABELS: Record<string, string> = {
   staff: 'Kelola Guru',
   kelas: 'Kelola Kelas',
   'tahun-ajaran': 'Tahun Ajaran',
-  'mutabaah-items': 'Bank Item Mutabaah',
+  'mutabaah-items': 'Template Mutabaah',
   'assign-guru': 'Penugasan Guru',
   'kenaikan-kelas': 'Kenaikan Kelas',
   export: 'Export Data',

@@ -50,7 +50,7 @@ const MENU_GROUPS: MenuGroup[] = [
     title: 'Akademik',
     roles: ['admin'],
     items: [
-      { href: '/admin/mutabaah-items', label: 'Bank Item Mutabaah', icon: <IconMutabaah /> },
+      { href: '/admin/mutabaah-items', label: 'Template Mutabaah', icon: <IconMutabaah /> },
       { href: '/admin/assign-guru',     label: 'Penugasan Guru',    icon: <IconAssign /> },
       { href: '/admin/kenaikan-kelas',  label: 'Kenaikan Kelas',    icon: <IconKenaikan /> },
     ],
@@ -202,7 +202,7 @@ function SidebarContent({
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-display font-bold text-lg leading-tight">SIMAK</p>
-          <p className="text-primary-300 text-[10px] leading-tight">SDIT Al-Kautsar Mukomuko</p>
+          <p className="text-primary-300 text-[10px] leading-tight">SDIT Al-Kautsar Muko-Muko</p>
         </div>
         {onClose && (
           <button

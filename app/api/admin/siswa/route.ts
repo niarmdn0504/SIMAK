@@ -56,22 +56,43 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(result)
     }
 
-    // Attach kelas aktif untuk setiap siswa
-    const { data: tahunAktif } = await supabase
-      .from('tahun_ajaran').select('id').eq('is_active', true).single()
+    // Cari tahun ajaran aktif. Jika tidak ada, ambil yang terakhir dibuat.
+    let { data: tahunAktif } = await supabase
+      .from('tahun_ajaran').select('id').eq('is_active', true).maybeSingle()
+    if (!tahunAktif) {
+      const { data: latest } = await supabase
+        .from('tahun_ajaran').select('id').order('created_at', { ascending: false }).limit(1).maybeSingle()
+      if (latest) tahunAktif = latest
+    }
 
     if (tahunAktif) {
-      const { data: skData } = await supabase
+      const { data: skData, error: skError } = await supabase
         .from('siswa_kelas')
-        .select('siswa_id, kelas:kelas_id(id, nama_kelas, wali_kelas:wali_kelas_id(nama))')
+        .select('siswa_id, kelas:kelas_id(id, nama_kelas)')
         .eq('tahun_ajaran_id', tahunAktif.id)
+
+      if (skError) {
+        console.error('siswa_kelas query error:', skError)
+        return NextResponse.json(siswaList ?? [])
+      }
 
       const skMap = new Map(skData?.map(r => [r.siswa_id, r]) ?? [])
 
-      // Get mutabaah/tahfiz status per kelas for today
-      const today = new Date().toISOString().split('T')[0]
+      // Ambil wali_kelas per kelas (secara terpisah, hindari nested join)
       const kelasIds = [...new Set((skData ?? []).map((r: any) => r.kelas?.id).filter(Boolean))]
+      const waliKelasMap = new Map<string, string | null>()
+      if (kelasIds.length > 0) {
+        const { data: kelasData } = await supabase
+          .from('kelas')
+          .select('id, wali_kelas:wali_kelas_id(nama)')
+          .in('id', kelasIds)
+        for (const k of kelasData ?? []) {
+          waliKelasMap.set(k.id, (k.wali_kelas as any)?.nama ?? null)
+        }
+      }
 
+      // Status mutabaah/tahfiz hari ini per kelas
+      const today = new Date().toISOString().split('T')[0]
       const [
         { data: mutabaahRows },
         { data: tahfizRows },
@@ -83,13 +104,12 @@ export async function GET(request: NextRequest) {
       const mutabaahSiswaIds = new Set((mutabaahRows ?? []).map((r: any) => r.siswa_id))
       const tahfizSiswaIds = new Set((tahfizRows ?? []).map((r: any) => r.siswa_id))
 
-      // Group siswa by kelas for counts
       const siswaByKelas = new Map<string, { total: number; mutabaah: number; tahfiz: number; waliKelas: string | null }>()
       for (const r of skData ?? []) {
         const kelasId = (r.kelas as any)?.id
         if (!kelasId) continue
         if (!siswaByKelas.has(kelasId)) {
-          siswaByKelas.set(kelasId, { total: 0, mutabaah: 0, tahfiz: 0, waliKelas: (r.kelas as any)?.wali_kelas?.nama ?? null })
+          siswaByKelas.set(kelasId, { total: 0, mutabaah: 0, tahfiz: 0, waliKelas: waliKelasMap.get(kelasId) ?? null })
         }
         const stats = siswaByKelas.get(kelasId)!
         stats.total++
