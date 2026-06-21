@@ -31,11 +31,13 @@ export function AdminDashboardClient({
   stats,
   recentActivity,
   kelasList,
+  kelasKosong,
   adminNama,
 }: {
   stats: Stats
   recentActivity: { mutabaah: ActivityItem[]; tahfiz: ActivityItem[]; wafa: ActivityItem[] }
   kelasList: KelasItem[]
+  kelasKosong: KelasItem[]
   adminNama: string
 }) {
   const mutabaahRate = stats.totalSiswaAktif > 0
@@ -79,6 +81,40 @@ export function AdminDashboardClient({
           />
         </div>
       </div>
+
+      {/* Warning: Kelas Kosong */}
+      {kelasKosong.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2" strokeLinecap="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-amber-800">
+                {kelasKosong.length} Kelas Kosong
+              </p>
+              <p className="text-xs text-amber-600 mt-0.5">
+                Kelas berikut belum punya siswa. Pertimbangkan untuk menghapus atau mengisi siswa.
+              </p>
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {kelasKosong.map(k => (
+                  <Link
+                    key={k.id}
+                    href={`/admin/kelas?kelasId=${k.id}`}
+                    className="text-xs font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 px-2 py-1 rounded transition-colors"
+                  >
+                    {k.nama}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Aktivitas Hari Ini */}
       <div>

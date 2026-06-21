@@ -73,6 +73,9 @@ export default async function AdminPage() {
     }
   }))
 
+  // Kelas kosong = kelas dengan 0 siswa
+  const kelasKosong = kelasStats.filter(k => k.totalSiswaInKelas === 0)
+
   return (
     <AdminDashboardClient
       stats={{
@@ -91,6 +94,7 @@ export default async function AdminPage() {
         wafa: (recentWafa ?? []).map((w: any) => ({ id: w.id, time: w.created_at, nama: w.siswa?.nama_lengkap ?? '-' })),
       }}
       kelasList={kelasStats}
+      kelasKosong={kelasKosong}
       adminNama={session.nama}
     />
   )

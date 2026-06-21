@@ -10,6 +10,8 @@ import { useToast }            from '@/components/ui/Toast'
 import { Breadcrumb }          from '@/components/ui/Breadcrumb'
 import { cn }                  from '@/lib/utils/cn'
 
+interface KelasItemInfo { item_id: string; item_nama: string }
+
 interface KelasRow {
   id:             string
   nama_kelas:     string
@@ -19,6 +21,7 @@ interface KelasRow {
   jumlah_siswa:   number
   mutabaah_hari_ini: number
   tahfiz_hari_ini:   number
+  mutabaah_items: KelasItemInfo[]
 }
 
 interface TahunItem { id: string; nama: string; is_active: boolean }
@@ -173,6 +176,21 @@ export default function AdminKelasPage() {
                         Tahfizh {kelas.tahfiz_hari_ini}/{kelas.jumlah_siswa}
                       </span>
                     </div>
+                    {/* Mutabaah items assigned */}
+                    {kelas.mutabaah_items.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {kelas.mutabaah_items.map(item => (
+                          <span key={item.item_id} className="text-[10px] font-medium text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded">
+                            {item.item_nama}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {kelas.mutabaah_items.length === 0 && kelas.jumlah_siswa > 0 && (
+                      <p className="text-[11px] text-amber-500 mt-1.5 font-medium">
+                        Belum ada template mutabaah
+                      </p>
+                    )}
                   </div>
                   <div className="flex gap-1">
                     <button onClick={() => openEditForm(kelas)} className="w-8 h-8 flex items-center justify-center rounded-lg text-neutral-400 hover:text-primary-500 hover:bg-primary-50">

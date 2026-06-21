@@ -33,6 +33,22 @@ export async function GET(request: NextRequest) {
     const kelasIds = (data ?? []).map(k => k.id)
     const today = new Date().toISOString().split('T')[0]
 
+    // Fetch mutabaah item assignments per kelas
+    let kelasItemMap = new Map<string, { item_id: string; item_nama: string }[]>()
+    if (kelasIds.length > 0) {
+      const { data: kelasItems } = await supabase
+        .from('kelas_mutabaah_item')
+        .select('kelas_id, mutabaah_item_id, item:mutabaah_item_id(nama_item)')
+        .in('kelas_id', kelasIds)
+      if (kelasItems) {
+        for (const ki of kelasItems) {
+          const arr = kelasItemMap.get(ki.kelas_id) ?? []
+          arr.push({ item_id: ki.mutabaah_item_id, item_nama: (ki.item as any)?.nama_item ?? '-' })
+          kelasItemMap.set(ki.kelas_id, arr)
+        }
+      }
+    }
+
     const [
       { data: siswaRows },
       { data: mutabaahRows },
@@ -67,6 +83,7 @@ export async function GET(request: NextRequest) {
         jumlah_siswa: totalSiswa,
         mutabaah_hari_ini: mutabaahTerisi,
         tahfiz_hari_ini: tahfizTerisi,
+        mutabaah_items: kelasItemMap.get(k.id) ?? [],
       }
     })
 

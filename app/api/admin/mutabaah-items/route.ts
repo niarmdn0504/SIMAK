@@ -26,25 +26,57 @@ export async function GET(request: NextRequest) {
     if (error) throw error
 
     const itemIds = (data ?? []).map(i => i.id)
-    let kelasCountMap = new Map<string, number>()
+    // Map: itemId → [{ kelas_id, kelas_nama }]
+    let kelasMap = new Map<string, { kelas_id: string; kelas_nama: string }[]>()
     if (itemIds.length > 0) {
       const { data: kelasItems } = await supabase
         .from('kelas_mutabaah_item')
-        .select('mutabaah_item_id')
+        .select('mutabaah_item_id, kelas_id, kelas:kelas_id(nama_kelas)')
         .in('mutabaah_item_id', itemIds)
       if (kelasItems) {
         for (const ki of kelasItems) {
-          kelasCountMap.set(ki.mutabaah_item_id, (kelasCountMap.get(ki.mutabaah_item_id) ?? 0) + 1)
+          const arr = kelasMap.get(ki.mutabaah_item_id) ?? []
+          arr.push({ kelas_id: ki.kelas_id, kelas_nama: (ki.kelas as any)?.nama_kelas ?? '-' })
+          kelasMap.set(ki.mutabaah_item_id, arr)
         }
       }
     }
 
     const result = (data ?? []).map(i => ({
       ...i,
-      jumlah_kelas: kelasCountMap.get(i.id) ?? 0,
+      jumlah_kelas: kelasMap.get(i.id)?.length ?? 0,
+      kelas_list:   kelasMap.get(i.id) ?? [],
     }))
 
     return NextResponse.json(result)
+  } catch (err: unknown) {
+    if (err instanceof Error && err.message === 'UNAUTHORIZED') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (err instanceof Error && err.message === 'FORBIDDEN')    return NextResponse.json({ error: 'Forbidden' },    { status: 403 })
+    return NextResponse.json({ error: 'Terjadi kesalahan' }, { status: 500 })
+  }
+}
+
+// DELETE: Unassign kelas dari item mutabaah
+// Body: { itemId, kelasId }
+export async function DELETE(request: NextRequest) {
+  try {
+    await requireRole(['admin'])
+    const supabase = await createServerClient()
+    const body     = await request.json()
+    const { itemId, kelasId } = body as { itemId: string; kelasId: string }
+
+    if (!itemId || !kelasId) {
+      return NextResponse.json({ error: 'itemId dan kelasId wajib diisi' }, { status: 400 })
+    }
+
+    const { error } = await supabase
+      .from('kelas_mutabaah_item')
+      .delete()
+      .eq('mutabaah_item_id', itemId)
+      .eq('kelas_id', kelasId)
+    if (error) throw error
+
+    return NextResponse.json({ success: true })
   } catch (err: unknown) {
     if (err instanceof Error && err.message === 'UNAUTHORIZED') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     if (err instanceof Error && err.message === 'FORBIDDEN')    return NextResponse.json({ error: 'Forbidden' },    { status: 403 })

@@ -5,6 +5,8 @@ import { useToast }            from '@/components/ui/Toast'
 import { Breadcrumb }          from '@/components/ui/Breadcrumb'
 import { cn }                  from '@/lib/utils/cn'
 
+interface KelasInfo { kelas_id: string; kelas_nama: string }
+
 interface ItemRow {
   id:              string
   nama_item:       string
@@ -13,6 +15,7 @@ interface ItemRow {
   is_active:       boolean
   tahun_ajaran_id: string
   jumlah_kelas:    number
+  kelas_list:      KelasInfo[]
 }
 
 interface TahunItem { id: string; nama: string; is_active: boolean }
@@ -215,6 +218,21 @@ export default function AdminMutabaahItemsPage() {
     else { const d = await res.json(); showToast(d.error ?? 'Gagal', 'error') }
   }
 
+  async function handleUnassign(itemId: string, kelasId: string, kelasNama: string) {
+    const res = await fetch('/api/admin/mutabaah-items', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemId, kelasId }),
+    })
+    if (res.ok) {
+      showToast(`Lepas dari ${kelasNama} berhasil`, 'success')
+      fetchData()
+    } else {
+      const d = await res.json()
+      showToast(d.error ?? 'Gagal', 'error')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-neutral-50">
       <div className="bg-white border-b border-neutral-100 px-4 py-4 sticky top-14 md:top-0 z-30">
@@ -267,16 +285,29 @@ export default function AdminMutabaahItemsPage() {
                             <span className="text-xs font-medium text-primary-600 bg-primary-100 px-2.5 py-0.5 rounded-full">
                               {group.children.length} Sub Item
                             </span>
-                            <span className={cn(
-                              'text-xs font-medium px-2.5 py-0.5 rounded-full',
-                              group.jumlah_kelas > 0
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-neutral-100 text-neutral-500'
-                            )}>
-                              {group.jumlah_kelas > 0
-                                ? `Dipakai ${group.jumlah_kelas} Kelas`
-                                : 'Belum digunakan'}
-                            </span>
+                            {group.kelas_list.length > 0 ? (
+                              <div className="flex items-center gap-1 flex-wrap">
+                                <span className="text-xs font-medium text-green-700 bg-green-100 px-2.5 py-0.5 rounded-full">
+                                  {group.kelas_list.length} Kelas
+                                </span>
+                                {group.kelas_list.map(k => (
+                                  <span key={k.kelas_id} className="inline-flex items-center gap-1 text-[11px] font-medium text-neutral-600 bg-neutral-100 px-2 py-0.5 rounded-full">
+                                    {k.kelas_nama}
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); handleUnassign(group.id, k.kelas_id, k.kelas_nama) }}
+                                      className="text-neutral-400 hover:text-danger font-bold leading-none ml-0.5"
+                                      title={`Lepas dari ${k.kelas_nama}`}
+                                    >
+                                      x
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-xs font-medium text-neutral-400 bg-neutral-100 px-2.5 py-0.5 rounded-full">
+                                Belum digunakan
+                              </span>
+                            )}
                           </div>
                         </div>
                         <svg
