@@ -26,13 +26,21 @@ export default function AdminMutabaahItemsPage() {
   const [tahunList,   setTahunList]   = useState<TahunItem[]>([])
   const [selectedTahun, setSelectedTahun] = useState('')
   const [isLoading,   setIsLoading]   = useState(true)
-  const [showForm,    setShowForm]    = useState(false)
-  const [editItem,    setEditItem]    = useState<ItemRow | null>(null)
-  const [formNama,    setFormNama]    = useState('')
-  const [formParent,  setFormParent]  = useState('')
-  const [subItems,    setSubItems]    = useState<string[]>([''])
-  const [formLoad,    setFormLoad]    = useState(false)
-  const [confirmDel,  setConfirmDel]  = useState<string | null>(null)
+
+  // Modal Tambah/Edit Item Utama
+  const [showMainForm, setShowMainForm] = useState(false)
+  const [editItem,     setEditItem]     = useState<ItemRow | null>(null)
+
+  // Modal Tambah Sub Item
+  const [showSubForm,    setShowSubForm]    = useState(false)
+  const [subParentId,    setSubParentId]    = useState('')
+  const [subParentNama,  setSubParentNama]  = useState('')
+
+  // Form state (shared)
+  const [formNama,   setFormNama]   = useState('')
+  const [subItems,   setSubItems]   = useState<string[]>([''])
+  const [formLoad,   setFormLoad]   = useState(false)
+  const [confirmDel, setConfirmDel] = useState<string | null>(null)
   const { showToast, ToastComponent } = useToast()
 
   async function fetchData() {
@@ -65,85 +73,98 @@ export default function AdminMutabaahItemsPage() {
   const inactiveItems = items.filter(i => !i.is_active)
   const parentItems = items.filter(i => !i.parent_id && i.is_active)
 
-  function openAddForm(parentId?: string) {
+  function openMainForm() {
     setEditItem(null)
     setFormNama('')
-    setFormParent(parentId || '')
-    setSubItems(parentId ? [] : [''])
-    setShowForm(true)
+    setSubItems([''])
+    setShowMainForm(true)
   }
 
   function openEditForm(item: ItemRow) {
     setEditItem(item)
     setFormNama(item.nama_item)
-    setFormParent(item.parent_id || '')
     setSubItems([])
-    setShowForm(true)
+    setShowMainForm(true)
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  function openSubForm(parentId: string, parentNama: string) {
+    setFormNama('')
+    setSubParentId(parentId)
+    setSubParentNama(parentNama)
+    setShowSubForm(true)
+  }
+
+  async function handleSubmitMain(e: React.FormEvent) {
     e.preventDefault()
     if (!formNama.trim() || !selectedTahun) return
     setFormLoad(true)
 
     if (editItem) {
-      // Edit existing item
       const res = await fetch(`/api/admin/mutabaah-items/${editItem.id}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ namaItem: formNama }),
       })
-      if (res.ok) { showToast('Item diperbarui', 'success'); setShowForm(false); fetchData() }
-      else showToast('Gagal memperbarui', 'error')
-    } else if (formParent) {
-      // Add sub-item to existing parent
-      const res = await fetch('/api/admin/mutabaah-items', {
+      if (res.ok) { showToast('Item diperbarui', 'success'); setShowMainForm(false); fetchData() }
+      else { const d = await res.json(); showToast(d.error ?? 'Gagal', 'error') }
+      setFormLoad(false)
+      return
+    }
+
+    // Create parent
+    const parentRes = await fetch('/api/admin/mutabaah-items', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ namaItem: formNama, tahunAjaranId: selectedTahun, parentId: null }),
+    })
+    if (!parentRes.ok) {
+      const d = await parentRes.json(); showToast(d.error ?? 'Gagal', 'error'); setFormLoad(false)
+      return
+    }
+
+    // Create sub-items if any
+    const parentData = await parentRes.json()
+    const parentId = parentData.id
+    const validSubs = subItems.filter(s => s.trim())
+    let subCreated = 0
+    for (const sub of validSubs) {
+      const subRes = await fetch('/api/admin/mutabaah-items', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ namaItem: formNama, tahunAjaranId: selectedTahun, parentId: formParent }),
+        body: JSON.stringify({ namaItem: sub, tahunAjaranId: selectedTahun, parentId }),
       })
-      if (res.ok) { showToast('Sub-item ditambahkan', 'success'); setShowForm(false); fetchData() }
-      else showToast('Gagal menambahkan', 'error')
-    } else {
-      // Add parent + sub-items in batch
-      const validSubs = subItems.filter(s => s.trim())
-      
-      // Create parent first
-      const parentRes = await fetch('/api/admin/mutabaah-items', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ namaItem: formNama, tahunAjaranId: selectedTahun, parentId: null }),
-      })
-      
-      if (!parentRes.ok) {
-        showToast('Gagal menambahkan item', 'error')
-        setFormLoad(false)
-        return
-      }
+      if (subRes.ok) subCreated++
+    }
 
-      const parentData = await parentRes.json()
-      const parentId = parentData.id
+    const msg = validSubs.length > 0
+      ? `Item ditambahkan dengan ${subCreated} sub item`
+      : 'Item ditambahkan'
+    showToast(msg, 'success')
+    setShowMainForm(false)
+    fetchData()
+    setFormLoad(false)
+  }
 
-      // Create sub-items
-      let subCreated = 0
-      for (const sub of validSubs) {
-        const subRes = await fetch('/api/admin/mutabaah-items', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ namaItem: sub, tahunAjaranId: selectedTahun, parentId }),
-        })
-        if (subRes.ok) subCreated++
-      }
+  async function handleSubmitSub(e: React.FormEvent) {
+    e.preventDefault()
+    if (!formNama.trim() || !selectedTahun) return
+    setFormLoad(true)
 
-      const msg = validSubs.length > 0
-        ? `Item ditambahkan dengan ${subCreated} sub item`
-        : 'Item ditambahkan'
-      showToast(msg, 'success')
-      setShowForm(false)
+    const res = await fetch('/api/admin/mutabaah-items', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ namaItem: formNama, tahunAjaranId: selectedTahun, parentId: subParentId }),
+    })
+    if (res.ok) {
+      showToast('Sub item ditambahkan', 'success')
+      setShowSubForm(false)
       fetchData()
+    } else {
+      const d = await res.json()
+      showToast(d.error ?? 'Gagal', 'error')
     }
     setFormLoad(false)
   }
 
   async function handleDelete(id: string) {
     const res = await fetch(`/api/admin/mutabaah-items/${id}`, { method: 'DELETE' })
-    if (res.ok) { showToast('Item dihapus', 'success'); setConfirmDel(null); fetchData() }
+    if (res.ok) { showToast('Item diarsipkan', 'success'); setConfirmDel(null); fetchData() }
     else showToast('Gagal', 'error')
   }
 
@@ -153,7 +174,7 @@ export default function AdminMutabaahItemsPage() {
         <Breadcrumb />
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-bold text-neutral-800">Template Mutabaah</h2>
-          <button onClick={() => openAddForm()} className="h-9 px-3 bg-primary-500 text-white text-xs font-semibold rounded-lg">+ Tambah</button>
+          <button onClick={openMainForm} className="h-9 px-3 bg-primary-500 text-white text-xs font-semibold rounded-lg">+ Tambah</button>
         </div>
         <select value={selectedTahun} onChange={e => setSelectedTahun(e.target.value)} className="w-full h-9 px-3 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-300">
           {tahunList.map(t => <option key={t.id} value={t.id}>{t.nama}{t.is_active ? ' (Aktif)' : ''}</option>)}
@@ -173,7 +194,7 @@ export default function AdminMutabaahItemsPage() {
             </div>
             <p className="text-sm font-semibold text-neutral-600">Belum ada item mutabaah</p>
             <p className="text-xs text-neutral-400 mt-1">Tambah item untuk memulai tracking ibadah</p>
-            <button onClick={() => openAddForm()} className="mt-4 h-10 px-6 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600">
+            <button onClick={openMainForm} className="mt-4 h-10 px-6 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600">
               + Tambah Item
             </button>
           </div>
@@ -244,7 +265,7 @@ export default function AdminMutabaahItemsPage() {
                   {/* Actions row */}
                   <div className="flex items-center gap-2 px-4 py-3 bg-neutral-50/50">
                     <button
-                      onClick={() => openAddForm(group.id)}
+                      onClick={() => openSubForm(group.id, group.nama_item)}
                       className="h-8 px-3 bg-primary-500 hover:bg-primary-600 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -284,36 +305,29 @@ export default function AdminMutabaahItemsPage() {
         )}
       </div>
 
-      {/* Form Modal */}
-      {showForm && (
+      {/* ─── MODAL TAMBAH / EDIT ITEM UTAMA ─── */}
+      {showMainForm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between px-4 py-4 border-b border-neutral-100 sticky top-0 bg-white z-10">
-              <h3 className="font-bold text-neutral-800">{editItem ? 'Edit Item' : formParent ? 'Tambah Sub Item' : 'Tambah Item Mutabaah'}</h3>
-              <button onClick={() => setShowForm(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-100 text-neutral-500">✕</button>
+              <h3 className="font-bold text-neutral-800">{editItem ? 'Edit Item' : 'Tambah Item Mutabaah'}</h3>
+              <button onClick={() => setShowMainForm(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-100 text-neutral-500">✕</button>
             </div>
-            <form onSubmit={handleSubmit} className="p-4 space-y-4">
+            <form onSubmit={handleSubmitMain} className="p-4 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-neutral-700 mb-1.5">
-                  {formParent ? 'Nama Sub Item' : 'Nama Item'} <span className="text-danger">*</span>
-                </label>
+                <label className="block text-sm font-semibold text-neutral-700 mb-1.5">Nama Item <span className="text-danger">*</span></label>
                 <input
                   type="text"
                   value={formNama}
                   onChange={e => setFormNama(e.target.value)}
-                  placeholder={formParent ? 'Masukkan nama sub item' : 'Contoh: Sholat Fardhu, Adab Harian...'}
+                  placeholder="Contoh: Sholat Fardhu, Adab Harian..."
                   className="w-full h-11 px-4 border border-neutral-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-300"
                   required
                 />
-                {formParent && (
-                  <p className="text-[11px] text-neutral-400 mt-1.5">
-                    Sub item akan muncul sebagai checklist yang diisi orang tua.
-                  </p>
-                )}
               </div>
 
-              {/* Sub-items form — only for new parent items */}
-              {!editItem && !formParent && (
+              {/* Sub items opsional — hanya untuk item baru */}
+              {!editItem && (
                 <div>
                   <label className="block text-sm font-semibold text-neutral-700 mb-2">Sub Item (opsional)</label>
                   <div className="space-y-2">
@@ -355,7 +369,45 @@ export default function AdminMutabaahItemsPage() {
               )}
 
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowForm(false)} className="flex-1 h-11 border border-neutral-200 rounded-lg text-sm font-semibold text-neutral-600">Batal</button>
+                <button type="button" onClick={() => setShowMainForm(false)} className="flex-1 h-11 border border-neutral-200 rounded-lg text-sm font-semibold text-neutral-600">Batal</button>
+                <button type="submit" disabled={formLoad} className={cn('flex-1 h-11 rounded-lg text-sm font-semibold text-white', formLoad ? 'bg-neutral-300' : 'bg-primary-500 hover:bg-primary-600')}>
+                  {formLoad ? 'Menyimpan...' : 'Simpan'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL TAMBAH SUB ITEM ─── */}
+      {showSubForm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-xl">
+            <div className="flex items-center justify-between px-4 py-4 border-b border-neutral-100">
+              <h3 className="font-bold text-neutral-800">Tambah Sub Item</h3>
+              <button onClick={() => setShowSubForm(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-100 text-neutral-500">✕</button>
+            </div>
+            <form onSubmit={handleSubmitSub} className="p-4 space-y-4">
+              <div className="bg-primary-50 rounded-lg px-3 py-2.5">
+                <p className="text-xs text-neutral-500">Untuk:</p>
+                <p className="text-sm font-semibold text-primary-700">{subParentNama}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-neutral-700 mb-1.5">Nama Sub Item <span className="text-danger">*</span></label>
+                <input
+                  type="text"
+                  value={formNama}
+                  onChange={e => setFormNama(e.target.value)}
+                  placeholder="Masukkan nama sub item"
+                  className="w-full h-11 px-4 border border-neutral-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-300"
+                  required
+                />
+                <p className="text-[11px] text-neutral-400 mt-1.5">
+                  Sub item akan muncul sebagai checklist yang diisi orang tua.
+                </p>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowSubForm(false)} className="flex-1 h-11 border border-neutral-200 rounded-lg text-sm font-semibold text-neutral-600">Batal</button>
                 <button type="submit" disabled={formLoad} className={cn('flex-1 h-11 rounded-lg text-sm font-semibold text-white', formLoad ? 'bg-neutral-300' : 'bg-primary-500 hover:bg-primary-600')}>
                   {formLoad ? 'Menyimpan...' : 'Simpan'}
                 </button>
