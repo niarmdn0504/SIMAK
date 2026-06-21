@@ -50,7 +50,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
       // Hapus log terkait
       const { error: logErr } = await supabase
-        .from('mutabaah_log').delete().in('mutabaah_item_id', allIds)
+        .from('mutabaah_log').delete().in('item_id', allIds)
       if (logErr) throw logErr
 
       // Hapus sub item
