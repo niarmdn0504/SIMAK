@@ -132,7 +132,7 @@ export default function AdminMutabaahItemsPage() {
       }
 
       const msg = validSubs.length > 0
-        ? `Item ditambahkan dengan ${subCreated} sub-poin`
+        ? `Item ditambahkan dengan ${subCreated} sub item`
         : 'Item ditambahkan'
       showToast(msg, 'success')
       setShowForm(false)
@@ -184,49 +184,35 @@ export default function AdminMutabaahItemsPage() {
               {groupedItems.map((group) => (
                 <div key={group.id} className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
                   {/* Parent row */}
-                  <div className="px-4 py-4 bg-gradient-to-r from-primary-50 to-white border-b border-neutral-100">
+                  <div className="px-4 pt-4 pb-3 bg-gradient-to-r from-primary-50 to-white">
                     <div className="flex items-start gap-3">
                       <span className="w-8 h-8 rounded-lg bg-primary-500 text-white text-sm font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
                         {group.urutan}
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-base text-primary-800">{group.nama_item}</p>
-                        <div className="flex items-center gap-3 mt-1.5">
-                          <span className="text-[11px] font-medium text-primary-500 bg-primary-50 px-2 py-0.5 rounded-full">
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                          <span className="text-xs font-medium text-primary-600 bg-primary-100 px-2.5 py-0.5 rounded-full">
                             {group.children.length} Sub Item
                           </span>
-                          <span className="text-[11px] text-neutral-500">
-                            Dipakai {group.jumlah_kelas > 0 ? `${group.jumlah_kelas} Kelas` : '— Kelas'}
+                          <span className={cn(
+                            'text-xs font-medium px-2.5 py-0.5 rounded-full',
+                            group.jumlah_kelas > 0
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-neutral-100 text-neutral-500'
+                          )}>
+                            {group.jumlah_kelas > 0
+                              ? `Dipakai ${group.jumlah_kelas} Kelas`
+                              : 'Belum digunakan'}
                           </span>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <button
-                          onClick={() => openAddForm(group.id)}
-                          className="h-8 px-3 bg-primary-500 hover:bg-primary-600 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
-                        >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                          Tambah Sub Item
-                        </button>
-                        <button
-                          onClick={() => openEditForm(group)}
-                          className="h-8 px-3 border border-neutral-200 hover:border-neutral-300 text-neutral-600 hover:text-neutral-800 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => setConfirmDel(group.id)}
-                          className="h-8 px-3 border border-neutral-200 hover:border-danger/30 text-danger text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
-                        >
-                          Arsipkan
-                        </button>
                       </div>
                     </div>
                   </div>
 
                   {/* Sub Items */}
                   {group.children.length > 0 && (
-                    <div>
+                    <div className="border-b border-neutral-100">
                       <p className="px-4 pt-3 pb-1 text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
                         Sub Item
                       </p>
@@ -240,7 +226,7 @@ export default function AdminMutabaahItemsPage() {
                             <button onClick={() => openEditForm(child)} className="text-xs text-neutral-400 hover:text-blue-600 font-semibold px-2 py-1 rounded hover:bg-blue-50 transition-colors">
                               Edit
                             </button>
-                            <button onClick={() => setConfirmDel(child.id)} className="text-xs text-neutral-400 hover:text-danger font-semibold px-2 py-1 rounded hover:bg-red-50 transition-colors">
+                            <button onClick={() => setConfirmDel(child.id)} className="text-xs text-neutral-400 hover:text-amber-600 font-semibold px-2 py-1 rounded hover:bg-amber-50 transition-colors">
                               Arsipkan
                             </button>
                           </div>
@@ -250,10 +236,33 @@ export default function AdminMutabaahItemsPage() {
                   )}
 
                   {group.children.length === 0 && (
-                    <div className="px-4 py-3 text-center">
+                    <div className="px-4 py-4 text-center border-b border-neutral-100">
                       <p className="text-xs text-neutral-400">Belum ada sub item. Klik "+ Tambah Sub Item" untuk menambahkan.</p>
                     </div>
                   )}
+
+                  {/* Actions row */}
+                  <div className="flex items-center gap-2 px-4 py-3 bg-neutral-50/50">
+                    <button
+                      onClick={() => openAddForm(group.id)}
+                      className="h-8 px-3 bg-primary-500 hover:bg-primary-600 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      Tambah Sub Item
+                    </button>
+                    <button
+                      onClick={() => openEditForm(group)}
+                      className="h-8 px-3 border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-600 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => setConfirmDel(group.id)}
+                      className="h-8 px-3 border border-neutral-200 bg-white hover:border-amber-200 hover:bg-amber-50 text-amber-600 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
+                    >
+                      Arsipkan
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -280,28 +289,33 @@ export default function AdminMutabaahItemsPage() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between px-4 py-4 border-b border-neutral-100 sticky top-0 bg-white z-10">
-              <h3 className="font-bold text-neutral-800">{editItem ? 'Edit Item' : formParent ? 'Tambah Sub-Item' : 'Tambah Item Mutabaah'}</h3>
+              <h3 className="font-bold text-neutral-800">{editItem ? 'Edit Item' : formParent ? 'Tambah Sub Item' : 'Tambah Item Mutabaah'}</h3>
               <button onClick={() => setShowForm(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-100 text-neutral-500">✕</button>
             </div>
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-neutral-700 mb-1.5">
-                  {formParent ? 'Nama Sub-Item' : 'Nama Item'} <span className="text-danger">*</span>
+                  {formParent ? 'Nama Sub Item' : 'Nama Item'} <span className="text-danger">*</span>
                 </label>
                 <input
                   type="text"
                   value={formNama}
                   onChange={e => setFormNama(e.target.value)}
-                  placeholder={formParent ? 'Contoh: Subuh, Dzuhur...' : 'Contoh: Sholat Fardhu, Adab Harian...'}
+                  placeholder={formParent ? 'Masukkan nama sub item' : 'Contoh: Sholat Fardhu, Adab Harian...'}
                   className="w-full h-11 px-4 border border-neutral-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-300"
                   required
                 />
+                {formParent && (
+                  <p className="text-[11px] text-neutral-400 mt-1.5">
+                    Sub item akan muncul sebagai checklist yang diisi orang tua.
+                  </p>
+                )}
               </div>
 
               {/* Sub-items form — only for new parent items */}
               {!editItem && !formParent && (
                 <div>
-                  <label className="block text-sm font-semibold text-neutral-700 mb-2">Sub Poin (opsional)</label>
+                  <label className="block text-sm font-semibold text-neutral-700 mb-2">Sub Item (opsional)</label>
                   <div className="space-y-2">
                     {subItems.map((sub, idx) => (
                       <div key={idx} className="flex items-center gap-2">
@@ -316,7 +330,7 @@ export default function AdminMutabaahItemsPage() {
                             next[idx] = e.target.value
                             setSubItems(next)
                           }}
-                          placeholder={`Sub poin ${idx + 1}`}
+                          placeholder={`Sub item ${idx + 1}`}
                           className="flex-1 h-9 px-3 border border-neutral-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-300"
                         />
                         <button
@@ -335,7 +349,7 @@ export default function AdminMutabaahItemsPage() {
                     className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-primary-500 hover:text-primary-600"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    Tambah Sub Poin
+                    Tambah Sub Item
                   </button>
                 </div>
               )}

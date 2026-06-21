@@ -64,6 +64,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Nama item dan tahun ajaran wajib diisi' }, { status: 400 })
     }
 
+    // Cek duplikat nama dalam parent & tahun ajaran yang sama
+    let dupQuery = supabase
+      .from('mutabaah_item')
+      .select('id')
+      .eq('nama_item', namaItem.trim())
+      .eq('tahun_ajaran_id', tahunAjaranId)
+
+    if (parentId) {
+      dupQuery = dupQuery.eq('parent_id', parentId)
+    } else {
+      dupQuery = dupQuery.is('parent_id', null)
+    }
+
+    const { data: existing } = await dupQuery.maybeSingle()
+    if (existing) {
+      return NextResponse.json({ error: 'Nama item sudah ada' }, { status: 409 })
+    }
+
     // Ambil urutan tertinggi
     let urutanQuery = supabase
       .from('mutabaah_item')
