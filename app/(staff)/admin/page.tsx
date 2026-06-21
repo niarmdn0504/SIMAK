@@ -28,7 +28,6 @@ export default async function AdminPage() {
     { data: recentMutabaah },
     { data: recentTahfiz },
     { data: recentWafa },
-    { data: kelasList },
   ] = await Promise.all([
     supabase.from('siswa').select('*', { count: 'exact', head: true }).eq('is_active', true),
     supabase.from('user_profile').select('*', { count: 'exact', head: true }).eq('is_active', true),
@@ -40,8 +39,39 @@ export default async function AdminPage() {
     supabase.from('mutabaah_log').select('id, created_at, siswa:siswa_id(nama_lengkap)').order('created_at', { ascending: false }).limit(5),
     supabase.from('tahfiz_log').select('id, created_at, siswa:siswa_id(nama_lengkap)').order('created_at', { ascending: false }).limit(5),
     supabase.from('wafa_log').select('id, created_at, siswa:siswa_id(nama_lengkap)').order('created_at', { ascending: false }).limit(5),
-    supabase.from('kelas').select('id, nama_kelas'),
   ])
+
+  // Ambil kelas list
+  const { data: kelasListRaw } = await supabase
+    .from('kelas').select('id, nama_kelas')
+
+  // Ambil detail statistik per kelas
+  const kelasStats = await Promise.all((kelasListRaw ?? []).map(async (kelas) => {
+    const { count: totalSiswaInKelas } = await supabase
+      .from('siswa_kelas')
+      .select('id', { count: 'exact', head: true })
+      .eq('kelas_id', kelas.id)
+
+    // Ambil daftar siswa_id di kelas ini dulu
+    const { data: siswaInKelas } = await supabase
+      .from('siswa_kelas')
+      .select('siswa_id')
+      .eq('kelas_id', kelas.id)
+    const siswaIds = siswaInKelas?.map(s => s.siswa_id) ?? []
+
+    const { count: mutabaahTodayInKelas } = await supabase
+      .from('mutabaah_log')
+      .select('id', { count: 'exact', head: true })
+      .eq('tanggal', today)
+      .in('siswa_id', siswaIds)
+
+    return {
+      id:                   kelas.id,
+      nama:                 kelas.nama_kelas,
+      totalSiswaInKelas:    totalSiswaInKelas ?? 0,
+      mutabaahTodayInKelas: mutabaahTodayInKelas ?? 0,
+    }
+  }))
 
   return (
     <AdminDashboardClient
@@ -60,7 +90,7 @@ export default async function AdminPage() {
         tahfiz: (recentTahfiz ?? []).map((t: any) => ({ id: t.id, time: t.created_at, nama: t.siswa?.nama_lengkap ?? '-' })),
         wafa: (recentWafa ?? []).map((w: any) => ({ id: w.id, time: w.created_at, nama: w.siswa?.nama_lengkap ?? '-' })),
       }}
-      kelasList={(kelasList ?? []).map((k: any) => ({ id: k.id, nama: k.nama_kelas }))}
+      kelasList={kelasStats}
       adminNama={session.nama}
     />
   )
