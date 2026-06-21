@@ -17,10 +17,6 @@ interface ItemRow {
 
 interface TahunItem { id: string; nama: string; is_active: boolean }
 
-interface ItemWithChildren extends ItemRow {
-  children: ItemRow[]
-}
-
 export default function AdminMutabaahItemsPage() {
   const [items,       setItems]       = useState<ItemRow[]>([])
   const [tahunList,   setTahunList]   = useState<TahunItem[]>([])
@@ -36,13 +32,30 @@ export default function AdminMutabaahItemsPage() {
   const [subParentId,    setSubParentId]    = useState('')
   const [subParentNama,  setSubParentNama]  = useState('')
 
-  // Form state (shared)
+  // Modal Pindahkan
+  const [showMoveModal, setShowMoveModal] = useState(false)
+  const [moveItem,      setMoveItem]      = useState<ItemRow | null>(null)
+  const [moveTargetParent, setMoveTargetParent] = useState('')
+
+  // Form state
   const [formNama,   setFormNama]   = useState('')
   const [subItems,   setSubItems]   = useState<string[]>([''])
   const [formLoad,   setFormLoad]   = useState(false)
   const [confirmDel, setConfirmDel] = useState<string | null>(null)
   const [confirmHapus, setConfirmHapus] = useState<string | null>(null)
   const { showToast, ToastComponent } = useToast()
+
+  // Collapse state per parent
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
+
+  function toggleCollapse(id: string) {
+    setCollapsedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   async function fetchData() {
     setIsLoading(true)
@@ -89,11 +102,16 @@ export default function AdminMutabaahItemsPage() {
   }
 
   function openSubForm(parentId: string, parentNama: string) {
-    console.log('[DEBUG openSubForm] parentId:', parentId, 'parentNama:', parentNama)
     setFormNama('')
     setSubParentId(parentId)
     setSubParentNama(parentNama)
     setShowSubForm(true)
+  }
+
+  function openMoveModal(item: ItemRow) {
+    setMoveItem(item)
+    setMoveTargetParent(item.parent_id || '')
+    setShowMoveModal(true)
   }
 
   async function handleSubmitMain(e: React.FormEvent) {
@@ -101,6 +119,7 @@ export default function AdminMutabaahItemsPage() {
     if (!formNama.trim() || !selectedTahun) return
     setFormLoad(true)
 
+    // Edit mode
     if (editItem) {
       const res = await fetch(`/api/admin/mutabaah-items/${editItem.id}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
@@ -112,35 +131,29 @@ export default function AdminMutabaahItemsPage() {
       return
     }
 
-    // Create parent
-    const parentRes = await fetch('/api/admin/mutabaah-items', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ namaItem: formNama, tahunAjaranId: selectedTahun, parentId: null }),
-    })
-    if (!parentRes.ok) {
-      const d = await parentRes.json(); showToast(d.error ?? 'Gagal', 'error'); setFormLoad(false)
-      return
-    }
-
-    // Create sub-items if any
-    const parentData = await parentRes.json()
-    const parentId = parentData.id
+    // Create mode — send parent + subItems in one request
     const validSubs = subItems.filter(s => s.trim())
-    let subCreated = 0
-    for (const sub of validSubs) {
-      const subRes = await fetch('/api/admin/mutabaah-items', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ namaItem: sub, tahunAjaranId: selectedTahun, parentId }),
-      })
-      if (subRes.ok) subCreated++
+    const payload = {
+      namaItem:      formNama,
+      tahunAjaranId: selectedTahun,
+      parentId:      null,
+      subItems:      validSubs.length > 0 ? validSubs : undefined,
     }
 
-    const msg = validSubs.length > 0
-      ? `Item ditambahkan dengan ${subCreated} sub item`
-      : 'Item ditambahkan'
-    showToast(msg, 'success')
-    setShowMainForm(false)
-    fetchData()
+    const res = await fetch('/api/admin/mutabaah-items', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+
+    if (res.ok) {
+      const data = await res.json()
+      showToast(data.message || 'Item ditambahkan', 'success')
+      setShowMainForm(false)
+      fetchData()
+    } else {
+      const d = await res.json()
+      showToast(d.error ?? 'Gagal', 'error')
+    }
     setFormLoad(false)
   }
 
@@ -149,10 +162,7 @@ export default function AdminMutabaahItemsPage() {
     if (!formNama.trim() || !selectedTahun) return
     setFormLoad(true)
 
-    console.log('[DEBUG handleSubmitSub] subParentId:', subParentId, 'formNama:', formNama, 'selectedTahun:', selectedTahun)
-
     const payload = { namaItem: formNama, tahunAjaranId: selectedTahun, parentId: subParentId || null }
-    console.log('[DEBUG handleSubmitSub] payload:', JSON.stringify(payload))
 
     const res = await fetch('/api/admin/mutabaah-items', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -165,6 +175,30 @@ export default function AdminMutabaahItemsPage() {
     } else {
       const d = await res.json()
       showToast(d.error ?? 'Gagal', 'error')
+    }
+    setFormLoad(false)
+  }
+
+  async function handleSubmitMove() {
+    if (!moveItem) return
+    setFormLoad(true)
+
+    const payload: Record<string, unknown> = {}
+    if (moveTargetParent) payload.parentId = moveTargetParent
+    else payload.parentId = null  // Jadikan item induk
+
+    const res = await fetch(`/api/admin/mutabaah-items/${moveItem.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+
+    if (res.ok) {
+      showToast('Item berhasil dipindahkan', 'success')
+      setShowMoveModal(false)
+      fetchData()
+    } else {
+      const d = await res.json()
+      showToast(d.error ?? 'Gagal memindahkan', 'error')
     }
     setFormLoad(false)
   }
@@ -213,98 +247,130 @@ export default function AdminMutabaahItemsPage() {
           </div>
         ) : (
           <>
-            {/* Parent items with children */}
             <div className="space-y-4">
-              {groupedItems.map((group, index) => (
-                <div key={group.id} className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
-                  {/* Parent row */}
-                  <div className="px-4 pt-4 pb-3 bg-gradient-to-r from-primary-50 to-white">
-                    <div className="flex items-start gap-3">
-                      <span className="w-8 h-8 rounded-lg bg-primary-500 text-white text-sm font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
-                        {index + 1}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-base text-primary-800">{group.nama_item}</p>
-                        <div className="flex items-center gap-2 mt-2 flex-wrap">
-                          <span className="text-xs font-medium text-primary-600 bg-primary-100 px-2.5 py-0.5 rounded-full">
-                            {group.children.length} Sub Item
-                          </span>
-                          <span className={cn(
-                            'text-xs font-medium px-2.5 py-0.5 rounded-full',
-                            group.jumlah_kelas > 0
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-neutral-100 text-neutral-500'
-                          )}>
-                            {group.jumlah_kelas > 0
-                              ? `Dipakai ${group.jumlah_kelas} Kelas`
-                              : 'Belum digunakan'}
-                          </span>
+              {groupedItems.map((group, index) => {
+                const isCollapsed = collapsedIds.has(group.id)
+                return (
+                  <div key={group.id} className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
+                    {/* Parent row — clickable to collapse */}
+                    <div
+                      className="px-4 pt-4 pb-3 bg-gradient-to-r from-primary-50 to-white cursor-pointer select-none"
+                      onClick={() => toggleCollapse(group.id)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className="w-8 h-8 rounded-lg bg-primary-500 text-white text-sm font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                          {index + 1}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-base text-primary-800">{group.nama_item}</p>
+                          <div className="flex items-center gap-2 mt-2 flex-wrap">
+                            <span className="text-xs font-medium text-primary-600 bg-primary-100 px-2.5 py-0.5 rounded-full">
+                              {group.children.length} Sub Item
+                            </span>
+                            <span className={cn(
+                              'text-xs font-medium px-2.5 py-0.5 rounded-full',
+                              group.jumlah_kelas > 0
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-neutral-100 text-neutral-500'
+                            )}>
+                              {group.jumlah_kelas > 0
+                                ? `Dipakai ${group.jumlah_kelas} Kelas`
+                                : 'Belum digunakan'}
+                            </span>
+                          </div>
                         </div>
+                        <svg
+                          width="16" height="16" viewBox="0 0 24 24" fill="none"
+                          stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"
+                          className={cn('flex-shrink-0 transition-transform mt-1', isCollapsed ? '-rotate-90' : '')}
+                        >
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Sub Items */}
-                  {group.children.length > 0 && (
-                    <div className="border-b border-neutral-100">
-                      <p className="px-4 pt-3 pb-1 text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
-                        Sub Item
-                      </p>
-                      {group.children.map((child) => (
-                        <div key={child.id} className="flex items-center gap-3 px-4 py-2.5 border-b border-neutral-50 last:border-0">
-                          <div className="w-5 h-5 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#27AE60" strokeWidth="3" strokeLinecap="round"><path d="M9 11l3 3L22 4"/></svg>
+                    {/* Sub Items — collapsible */}
+                    {!isCollapsed && (
+                      <>
+                        {group.children.length > 0 ? (
+                          <div className="border-b border-neutral-100">
+                            <p className="px-4 pt-3 pb-1 text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
+                              Sub Item
+                            </p>
+                            {group.children.map((child) => (
+                              <div key={child.id} className="flex items-center gap-3 px-4 py-2.5 border-b border-neutral-50 last:border-0">
+                                <div className="w-5 h-5 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
+                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#27AE60" strokeWidth="3" strokeLinecap="round"><path d="M9 11l3 3L22 4"/></svg>
+                                </div>
+                                <p className="flex-1 text-sm text-neutral-700">{child.nama_item}</p>
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); openMoveModal(child) }}
+                                    className="text-xs text-neutral-400 hover:text-primary-600 font-semibold px-2 py-1 rounded hover:bg-primary-50 transition-colors"
+                                  >
+                                    Pindahkan
+                                  </button>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); openEditForm(child) }}
+                                    className="text-xs text-neutral-400 hover:text-blue-600 font-semibold px-2 py-1 rounded hover:bg-blue-50 transition-colors"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setConfirmHapus(child.id) }}
+                                    className="text-xs text-neutral-400 hover:text-danger font-semibold px-2 py-1 rounded hover:bg-red-50 transition-colors"
+                                  >
+                                    Hapus
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                          <p className="flex-1 text-sm text-neutral-700">{child.nama_item}</p>
-                          <div className="flex items-center gap-2">
-                            <button onClick={() => openEditForm(child)} className="text-xs text-neutral-400 hover:text-blue-600 font-semibold px-2 py-1 rounded hover:bg-blue-50 transition-colors">
-                              Edit
-                            </button>
-                            <button onClick={() => setConfirmHapus(child.id)} className="text-xs text-neutral-400 hover:text-danger font-semibold px-2 py-1 rounded hover:bg-red-50 transition-colors">
-                              Hapus
-                            </button>
+                        ) : (
+                          <div className="px-4 py-4 text-center border-b border-neutral-100">
+                            <p className="text-xs text-neutral-400">Belum ada sub item.</p>
                           </div>
+                        )}
+
+                        {/* Actions row */}
+                        <div className="flex items-center gap-2 px-4 py-3 bg-neutral-50/50">
+                          <button
+                            onClick={() => openSubForm(group.id, group.nama_item)}
+                            className="h-8 px-3 bg-primary-500 hover:bg-primary-600 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Tambah Sub Item
+                          </button>
+                          <button
+                            onClick={() => openEditForm(group)}
+                            className="h-8 px-3 border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-600 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => openMoveModal(group)}
+                            className="h-8 px-3 border border-neutral-200 bg-white hover:bg-primary-50 hover:border-primary-200 text-primary-600 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
+                          >
+                            Pindahkan
+                          </button>
+                          <button
+                            onClick={() => setConfirmDel(group.id)}
+                            className="h-8 px-3 border border-neutral-200 bg-white hover:border-amber-200 hover:bg-amber-50 text-amber-600 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
+                          >
+                            Arsipkan
+                          </button>
+                          <button
+                            onClick={() => setConfirmHapus(group.id)}
+                            className="h-8 px-3 border border-neutral-200 bg-white hover:border-red-200 hover:bg-red-50 text-danger text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
+                          >
+                            Hapus
+                          </button>
                         </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {group.children.length === 0 && (
-                    <div className="px-4 py-4 text-center border-b border-neutral-100">
-                      <p className="text-xs text-neutral-400">Belum ada sub item. Klik "+ Tambah Sub Item" untuk menambahkan.</p>
-                    </div>
-                  )}
-
-                  {/* Actions row */}
-                  <div className="flex items-center gap-2 px-4 py-3 bg-neutral-50/50">
-                    <button
-                      onClick={() => openSubForm(group.id, group.nama_item)}
-                      className="h-8 px-3 bg-primary-500 hover:bg-primary-600 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                      Tambah Sub Item
-                    </button>
-                    <button
-                      onClick={() => openEditForm(group)}
-                      className="h-8 px-3 border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-600 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => setConfirmDel(group.id)}
-                      className="h-8 px-3 border border-neutral-200 bg-white hover:border-amber-200 hover:bg-amber-50 text-amber-600 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
-                    >
-                      Arsipkan
-                    </button>
-                    <button
-                      onClick={() => setConfirmHapus(group.id)}
-                      className="h-8 px-3 border border-neutral-200 bg-white hover:border-red-200 hover:bg-red-50 text-danger text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
-                    >
-                      Hapus
-                    </button>
+                      </>
+                    )}
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             {/* Inactive items */}
@@ -432,6 +498,48 @@ export default function AdminMutabaahItemsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL PINDAHKAN ─── */}
+      {showMoveModal && moveItem && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-xl">
+            <div className="flex items-center justify-between px-4 py-4 border-b border-neutral-100">
+              <h3 className="font-bold text-neutral-800">Pindahkan Item</h3>
+              <button onClick={() => setShowMoveModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-100 text-neutral-500">✕</button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="bg-primary-50 rounded-lg px-3 py-2.5">
+                <p className="text-xs text-neutral-500">Memindahkan:</p>
+                <p className="text-sm font-semibold text-primary-700">{moveItem.nama_item}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-neutral-700 mb-1.5">Pindahkan ke</label>
+                <select
+                  value={moveTargetParent}
+                  onChange={e => setMoveTargetParent(e.target.value)}
+                  className="w-full h-11 px-3 border border-neutral-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-300"
+                >
+                  <option value="">── Item Induk (Level Utama) ──</option>
+                  {parentItems.filter(p => p.id !== moveItem.id).map(p => (
+                    <option key={p.id} value={p.id}>{p.nama_item}</option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-neutral-400 mt-1.5">
+                  Pilih item induk atau kosongkan untuk menjadikan item induk.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button onClick={() => setShowMoveModal(false)} className="flex-1 h-11 border border-neutral-200 rounded-lg text-sm font-semibold text-neutral-600">Batal</button>
+                <button onClick={handleSubmitMove} disabled={formLoad} className={cn('flex-1 h-11 rounded-lg text-sm font-semibold text-white', formLoad ? 'bg-neutral-300' : 'bg-primary-500 hover:bg-primary-600')}>
+                  {formLoad ? 'Memindahkan...' : 'Pindahkan'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
