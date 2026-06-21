@@ -119,7 +119,7 @@ export function KelasMutabaahForm({ kelas, allItems, initialActiveIds }: Props) 
                     onClick={() => toggleParent(parent.id)}
                     className="text-xs text-primary-600 font-medium hover:underline"
                   >
-                    {allChecked ? 'Hapus semua' : 'Pilih semua'}
+                    {allChecked ? 'Batalkan Pilihan' : 'Pilih semua'}
                   </button>
                 )}
               </div>

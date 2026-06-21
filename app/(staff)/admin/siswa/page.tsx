@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo }  from 'react'
+import { useState, useEffect, useMemo, useRef }  from 'react'
 import { useSearchParams }      from 'next/navigation'
 import { useToast }             from '@/components/ui/Toast'
 import { ImportExcelModal }     from '@/components/admin/ImportExcelModal'
@@ -40,6 +40,14 @@ export default function AdminSiswaPage() {
   const [confirmDeleteKelas, setConfirmDeleteKelas] = useState<{ nama: string; id: string | null } | null>(null)
   const [expandedKelas, setExpandedKelas] = useState<Set<string>>(new Set())
   const { showToast, ToastComponent } = useToast()
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  function handleSearchChange(value: string) {
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
+    searchTimeoutRef.current = setTimeout(() => {
+      setSearch(value)
+    }, 300)
+  }
 
   async function fetchSiswa() {
     setIsLoading(true)
@@ -160,7 +168,7 @@ export default function AdminSiswaPage() {
         <input
           type="text"
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={e => handleSearchChange(e.target.value)}
           placeholder="Cari nama atau NISN..."
           className="w-full h-9 px-3 text-sm border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-300"
         />

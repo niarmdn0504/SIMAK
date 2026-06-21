@@ -5,7 +5,7 @@
 
 'use client'
 
-import { useState, useMemo }  from 'react'
+import { useState, useMemo, useRef }  from 'react'
 import { useRouter }          from 'next/navigation'
 import { useSiswaList, useKelasList, type SiswaItem } from '@/hooks/useSiswa'
 import { SkeletonCard }       from '@/components/ui/Skeleton'
@@ -22,6 +22,15 @@ export function SiswaList({ detailPath }: SiswaListProps) {
 
   const { data: allSiswa, isLoading, isError } = useSiswaList()
   const kelasList = useKelasList(allSiswa ?? [])
+
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  function handleSearchChange(value: string) {
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
+    searchTimeoutRef.current = setTimeout(() => {
+      setSearch(value)
+    }, 300)
+  }
 
   const filtered = useMemo(() => {
     if (!allSiswa) return []
@@ -68,7 +77,7 @@ export function SiswaList({ detailPath }: SiswaListProps) {
           <input
             type="text"
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => handleSearchChange(e.target.value)}
             placeholder="Cari nama siswa..."
             className="w-full h-9 pl-9 pr-4 text-sm border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-300"
           />

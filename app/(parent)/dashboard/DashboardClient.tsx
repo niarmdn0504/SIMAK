@@ -150,7 +150,7 @@ function MutabaahHarian({
   tanggal:    string
 }) {
   const { mutate: toggle } = useToggleMutabaah()
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [savingId, setSavingId] = useState<string | null>(null)
 
   // Hitung dari leaf items saja (parent items tidak dihitung)
@@ -167,6 +167,12 @@ function MutabaahHarian({
     toggle(
       { itemId: item.id, tanggal, isChecked: !item.is_checked },
       {
+        onSuccess: () => {
+          setSavingId(null)
+        },
+        onError: (error) => {
+          setSavingId(null)
+        },
         onSettled: () => setSavingId(null),
       }
     )
@@ -214,7 +220,7 @@ function MutabaahHarian({
       <div className="space-y-2">
         {items.map((item, index) => {
           const hasChildren = item.children && item.children.length > 0
-          const isExpanded  = expandedId === item.id
+          const isExpanded  = expandedIds.has(item.id)
 
           if (hasChildren) {
             return (
@@ -225,7 +231,14 @@ function MutabaahHarian({
                 isLocked={isLocked}
                 savingId={savingId}
                 onToggle={handleToggle}
-                onExpand={() => setExpandedId(isExpanded ? null : item.id)}
+                onExpand={() => {
+                  setExpandedIds(prev => {
+                    const next = new Set(prev)
+                    if (next.has(item.id)) next.delete(item.id)
+                    else next.add(item.id)
+                    return next
+                  })
+                }}
                 index={index}
               />
             )

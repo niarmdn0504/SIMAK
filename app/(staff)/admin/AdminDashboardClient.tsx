@@ -52,7 +52,7 @@ export function AdminDashboardClient({
         <div className="absolute -right-2 -bottom-8 w-24 h-24 bg-white/5 rounded-full" />
         <div className="relative z-10">
           <p className="text-primary-100 text-xs font-medium uppercase tracking-wide">Tahun Ajaran {stats.tahunAktif}</p>
-          <h1 className="text-2xl font-bold mt-1">Selamat Datang</h1>
+          <h1 className="text-2xl font-bold mt-1">Selamat Datang, {adminNama}</h1>
           <p className="text-primary-200 text-sm mt-0.5">Kelola data siswa dan mutabaah sekolah</p>
         </div>
       </div>
@@ -284,21 +284,6 @@ export function AdminDashboardClient({
   )
 }
 
-function StatCard({ value, label, icon, color }: {
-  value: number; label: string; icon: React.ReactNode; color: string
-}) {
-  return (
-    <div className={`bg-gradient-to-br ${color} rounded-xl p-4 text-white relative overflow-hidden`}>
-      <div className="absolute -right-3 -bottom-3 w-16 h-16 bg-white/10 rounded-full" />
-      <div className="relative z-10">
-        <div className="flex items-center gap-2 mb-2 opacity-80">{icon}</div>
-        <p className="text-3xl font-bold">{value}</p>
-        <p className="text-white/80 text-xs mt-0.5">{label}</p>
-      </div>
-    </div>
-  )
-}
-
 function QuickAction({ href, label, icon, color }: {
   href: string; label: string; icon: React.ReactNode; color: string
 }) {
@@ -313,6 +298,21 @@ function QuickAction({ href, label, icon, color }: {
       <span className="flex-shrink-0">{icon}</span>
       <span className="text-sm font-semibold leading-tight">{label}</span>
     </Link>
+  )
+}
+
+function StatCard({ value, label, icon, color }: {
+  value: number; label: string; icon: React.ReactNode; color: string
+}) {
+  return (
+    <div className={`bg-gradient-to-br ${color} rounded-xl p-4 text-white relative overflow-hidden`}>
+      <div className="absolute -right-3 -bottom-3 w-16 h-16 bg-white/10 rounded-full" />
+      <div className="relative z-10">
+        <div className="flex items-center gap-2 mb-2 opacity-80">{icon}</div>
+        <p className="text-3xl font-bold">{value}</p>
+        <p className="text-white/80 text-xs mt-0.5">{label}</p>
+      </div>
+    </div>
   )
 }
 

@@ -35,11 +35,9 @@ export function Breadcrumb() {
     const segment = segments[i]
     accumulatedPath += `/${segment}`
 
-    // Skip role segment (admin/guru/orangtua)
+    // Skip role segment (admin/guru/orangtua) but add home link
     if (['admin', 'guru', 'orangtua'].includes(segment) && i === 0) {
-      if (segments.length === 1) {
-        items.push({ label: ROUTE_LABELS[segment] || segment })
-      }
+      items.push({ label: ROUTE_LABELS[segment] || segment, href: accumulatedPath })
       continue
     }
 
@@ -53,7 +51,7 @@ export function Breadcrumb() {
     }
   }
 
-  if (items.length <= 1) return null
+  if (items.length === 0) return null
 
   return (
     <nav className="flex items-center gap-1.5 text-xs text-neutral-400 mb-4">

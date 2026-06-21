@@ -76,7 +76,10 @@ export default function AdminMutabaahItemsPage() {
     setIsLoading(false)
   }
 
-  useEffect(() => { fetchData() }, [selectedTahun])
+  useEffect(() => { 
+    if (!selectedTahun) return
+    fetchData() 
+  }, [selectedTahun])
 
   const groupedItems = useMemo(() => {
     const parents = items.filter(i => !i.parent_id && i.is_active)

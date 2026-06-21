@@ -1,11 +1,16 @@
 'use client'
 
-import { useState }           from 'react'
+import { useState, useEffect }           from 'react'
 import { useQuery }           from '@tanstack/react-query'
 import { useRouter }          from 'next/navigation'
 import { getTodayWIB, formatTanggal } from '@/lib/utils/date'
 import { SkeletonDashboard }  from '@/components/ui/Skeleton'
 import { cn }                 from '@/lib/utils/cn'
+
+// Design tokens untuk konsistensi
+const ANIMATION_DELAY_BASE = 0.05 // seconds per item
+const PROGRESS_THRESHOLD_HIGH = 80
+const PROGRESS_THRESHOLD_MED = 50
 
 interface SiswaStatus {
   siswaId:      string
@@ -34,11 +39,33 @@ const STATUS_CONFIG = {
   sebagian: { label: 'Sebagian', color: 'text-warning',  bg: 'bg-amber-50', border: 'border-amber-200',  icon: '⚠️' },
   belum:    { label: 'Belum',    color: 'text-danger',   bg: 'bg-red-50',   border: 'border-red-200',    icon: '❌' },
 }
+async function fetchWithRetry(url: string, options: RequestInit = {}, maxRetries = 3) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const res = await fetch(url, options)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      return res
+    } catch (err) {
+      if (i === maxRetries - 1) throw err
+      await new Promise(r => setTimeout(r, 1000 * (i + 1))) // exponential backoff
+    }
+  }
+  throw new Error('Max retries reached')
+}
 
 export function WaliKelasClient({ namaGuru, detailPath = '/wali-kelas' }: { namaGuru: string; detailPath?: string }) {
   const router  = useRouter()
   const tanggal = getTodayWIB()
   const [expandedKelas, setExpandedKelas] = useState<string | null>(null)
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    setPrefersReducedMotion(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   const { data, isLoading, isError, refetch } = useQuery<{
     siswaList: SiswaStatus[]
@@ -46,7 +73,7 @@ export function WaliKelasClient({ namaGuru, detailPath = '/wali-kelas' }: { nama
   }>({
     queryKey: ['wali-kelas', tanggal],
     queryFn:  async () => {
-      const res = await fetch(`/api/staff/wali-kelas?tanggal=${tanggal}`)
+      const res = await fetchWithRetry(`/api/staff/wali-kelas?tanggal=${tanggal}`)
       if (!res.ok) throw new Error('Gagal memuat data')
       return res.json()
     },
@@ -97,6 +124,9 @@ export function WaliKelasClient({ namaGuru, detailPath = '/wali-kelas' }: { nama
   }
   const kelasEntries = Array.from(kelasMap.entries()).sort((a, b) => a[0].localeCompare(b[0]))
 
+  // Default semua kelas collapsed untuk UX yang lebih baik
+  // Expand per kelas untuk melihat detail siswa
+
   return (
     <div className="px-4 py-4 max-w-lg mx-auto space-y-4">
       {/* Greeting */}
@@ -118,7 +148,7 @@ export function WaliKelasClient({ namaGuru, detailPath = '/wali-kelas' }: { nama
           const isExpanded = expandedKelas === namaKelas
 
           return (
-            <div key={namaKelas} className="card animate-in" style={{ animationDelay: `${ki * 0.05}s` }}>
+            <div key={namaKelas} className="card animate-in" style={{ animationDelay: prefersReducedMotion ? '0s' : `${ki * ANIMATION_DELAY_BASE}s` }}>
               {/* Card header */}
               <button
                 onClick={() => setExpandedKelas(isExpanded ? null : namaKelas)}
@@ -134,9 +164,12 @@ export function WaliKelasClient({ namaGuru, detailPath = '/wali-kelas' }: { nama
                 <div className="text-right flex-shrink-0">
                   <p className={cn(
                     'text-sm font-bold',
-                    avgPct >= 80 ? 'text-success' : avgPct >= 50 ? 'text-warning' : 'text-danger'
+                    avgPct >= PROGRESS_THRESHOLD_HIGH ? 'text-success' : avgPct >= PROGRESS_THRESHOLD_MED ? 'text-warning' : 'text-danger'
                   )}>
                     {avgPct}%
+                  </p>
+                  <p className="text-[10px] text-neutral-400">
+                    {avgPct >= PROGRESS_THRESHOLD_HIGH ? 'Baik' : avgPct >= PROGRESS_THRESHOLD_MED ? 'Sedang' : 'Perlu ditingkatkan'}
                   </p>
                 </div>
                 <svg

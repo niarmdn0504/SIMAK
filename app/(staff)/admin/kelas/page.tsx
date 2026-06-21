@@ -63,7 +63,10 @@ export default function AdminKelasPage() {
     setIsLoading(false)
   }
 
-  useEffect(() => { fetchData() }, [selectedTahun])
+  useEffect(() => { 
+    if (!selectedTahun) return
+    fetchData() 
+  }, [selectedTahun])
 
   function openAddForm() {
     setEditKelas(null)
